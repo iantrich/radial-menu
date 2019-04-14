@@ -98,7 +98,7 @@ items:
       navigation_path: /lovelace/1
 ```
 
-[Troubleshooting](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins
+[Troubleshooting](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins)
 
 Inspiration taken from [Creative Punch](https://codepen.io/CreativePunch/pen/lAHiu)
 
