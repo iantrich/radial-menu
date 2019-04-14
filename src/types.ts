@@ -11,14 +11,15 @@ export interface RadialMenuConfig {
   type: string;
   name: string;
   icon: string;
+  default_open?: boolean;
   items: RadialMenuItemConfig[];
 }
 
 export interface RadialMenuItemConfig {
-  name: string;
   icon: string;
-  entity: string;
-  tap_action: ActionConfig;
+  name?: string;
+  entity?: string;
+  tap_action?: ActionConfig;
 }
 
 export interface ToggleActionConfig {

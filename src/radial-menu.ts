@@ -75,6 +75,12 @@ class RadialMenu extends LitElement {
     `;
   }
 
+  protected firstUpdated(): void {
+    if(this._config && this._config.default_open) {
+      this._toggleMenu();
+    }
+  }
+
   private _toggleMenu() {
     this.shadowRoot!.querySelector(".circle")!.classList.toggle("open");
   }

@@ -17,12 +17,13 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 
 ## Options
 
-| Name | Type | Requirement | Description
-| ---- | ---- | ------- | -----------
-| type | string | **Required** | `custom:radial-menu`
-| items | list | **Required** | List of items to display in the radial
-| name | string | **Optional** | Tooltip for main menu `Menu`
-| icon | string | **Optional** | mdi icon for main menu `mdi:menu`
+| Name | Type | Requirement | Description | Default
+| ---- | ---- | ------- | ----------- | -------
+| type | string | **Required** | `custom:radial-menu` | `none`
+| items | list | **Required** | List of items to display in the radial | `none`
+| name | string | **Optional** | Tooltip for main menu | `Menu`
+| icon | string | **Optional** | mdi icon for main menu | `mdi:menu`
+| default_open | boolean | **Optional** | Should the radial be expanded on first load | `false`
 
 ## Items Options
 

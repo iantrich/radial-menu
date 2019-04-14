@@ -2533,6 +2533,11 @@ let RadialMenu = class RadialMenu extends LitElement {
       </nav>
     `;
     }
+    firstUpdated() {
+        if (this._config && this._config.default_open) {
+            this._toggleMenu();
+        }
+    }
     _toggleMenu() {
         this.shadowRoot.querySelector(".circle").classList.toggle("open");
     }
