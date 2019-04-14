@@ -98,7 +98,9 @@ items:
       navigation_path: /lovelace/1
 ```
 
-[Troubleshooting](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins)
+[Troubleshooting](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins
+
+Inspiration taken from [Creative Punch](https://codepen.io/CreativePunch/pen/lAHiu)
 
 [buymecoffee]: https://www.buymeacoffee.com/iantrich
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-blue.svg?style=for-the-badge
