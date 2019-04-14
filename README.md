@@ -13,7 +13,7 @@
 
 This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home Assistant](https://www.home-assistant.io/) that provides a radial menu on click for quick/space saving access to commands. Designed for picture-elements, but can be used anywhere.
 
-![example](example.gif)
+![example](example2.gif)
 
 ## Options
 
