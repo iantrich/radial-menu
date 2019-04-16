@@ -10,14 +10,15 @@ import {
 export interface RadialMenuConfig {
   type: string;
   name: string;
-  icon: string;
+  icon?: string;
   default_open?: boolean;
   default_dismiss?: boolean;
   items: RadialMenuItemConfig[];
 }
 
 export interface RadialMenuItemConfig {
-  icon: string;
+  icon?: string;
+  entity_picture?: string;
   name?: string;
   entity?: string;
   tap_action?: ActionConfig;

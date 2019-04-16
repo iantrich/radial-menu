@@ -2502,23 +2502,53 @@ let RadialMenu = class RadialMenu extends LitElement {
       <nav class="circular-menu">
         <div class="circle">
           ${this._config.items.map((item, index) => {
-            return html `
-              <ha-icon
-                @click="${this._handleTap}"
-                .config="${item}"
-                .icon="${item.icon}"
-                .title="${item.name}"
-                style="
+            return item.entity_picture
+                ? html `
+                  <hui-image
+                    @click="${this._handleTap}"
+                    .hass="${this.hass}"
+                    .image="${item.entity_picture}"
+                    .title="${item.name}"
+                    style="
                 left:${(50 -
-                35 *
-                    Math.cos(-0.5 * Math.PI -
-                        2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(4) + "%"};
+                    35 *
+                        Math.cos(-0.5 * Math.PI -
+                            2 *
+                                (1 / this._config.items.length) *
+                                index *
+                                Math.PI)).toFixed(4) + "%"};
                 top:${(50 +
-                35 *
-                    Math.sin(-0.5 * Math.PI -
-                        2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(4) + "%"};"
-              ></ha-icon>
-            `;
+                    35 *
+                        Math.sin(-0.5 * Math.PI -
+                            2 *
+                                (1 / this._config.items.length) *
+                                index *
+                                Math.PI)).toFixed(4) + "%"};"
+                  ></hui-image>
+                `
+                : html `
+                  <ha-icon
+                    @click="${this._handleTap}"
+                    .config="${item}"
+                    .icon="${item.icon}"
+                    .title="${item.name}"
+                    style="
+                left:${(50 -
+                    35 *
+                        Math.cos(-0.5 * Math.PI -
+                            2 *
+                                (1 / this._config.items.length) *
+                                index *
+                                Math.PI)).toFixed(4) + "%"};
+                top:${(50 +
+                    35 *
+                        Math.sin(-0.5 * Math.PI -
+                            2 *
+                                (1 / this._config.items.length) *
+                                index *
+                                Math.PI)).toFixed(4) + "%"};"
+                  ></ha-icon>
+                `;
         })}
         </div>
         <ha-icon
@@ -2579,7 +2609,8 @@ let RadialMenu = class RadialMenu extends LitElement {
         transform: scale(1);
       }
 
-      .circle ha-icon {
+      .circle ha-icon,
+      .circle hui-image {
         text-decoration: none;
         display: block;
         height: 40px;

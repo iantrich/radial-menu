@@ -32,7 +32,8 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 | ---- | ---- | ------- | ----------- | -------
 | entity | string | **Optional** | Home Assistant entity ID. | `none`
 | name | string | **Optional** | Tooltip for main menu | `Menu`
-| icon | string | **Optional** | mdi icon for main menu | `mdi:menu`
+| icon | string | **Optional** | mdi icon for main menu | `none`
+| entity_picture | string | **Optional** | picture to display | `none`
 | tap_action | object | **Optional** | Action to take on tap | `action: more-info`
 
 ## Action Options
@@ -93,7 +94,7 @@ items:
       service: timer.start
       service_data:
         entity_id: timer.laundry
-  - icon: 'mdi:headphones'
+  - entity_picture: '/local/headphones.png'
     name: Podcasts
     tap_action:
       action: navigate
