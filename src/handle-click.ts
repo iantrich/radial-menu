@@ -28,19 +28,15 @@ export const handleClick = (
     };
   }
 
-  console.log(actionConfig);
-
   switch (actionConfig.action) {
     case "more-info":
       if (config.entity || config.camera_image) {
-        console.log("fireevent");
         fireEvent(node, "hass-more-info", {
           entityId: config.entity ? config.entity : config.camera_image!,
         });
       }
       break;
     case "navigate":
-      console.log("navigate");
       if (actionConfig.navigation_path) {
         navigate(node, actionConfig.navigation_path);
       }

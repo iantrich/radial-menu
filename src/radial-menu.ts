@@ -22,7 +22,12 @@ class RadialMenu extends LitElement {
       throw new Error("Invalid configuration");
     }
 
-    this._config = { icon: "mdi:menu", name: "menu", ...config };
+    this._config = {
+      icon: "mdi:menu",
+      name: "menu",
+      default_dismiss: true,
+      ...config
+    };
   }
 
   public getCardSize(): number {
@@ -76,7 +81,7 @@ class RadialMenu extends LitElement {
   }
 
   protected firstUpdated(): void {
-    if(this._config && this._config.default_open) {
+    if (this._config && this._config.default_open) {
       this._toggleMenu();
     }
   }
@@ -88,7 +93,9 @@ class RadialMenu extends LitElement {
   private _handleTap(ev) {
     const config = ev.target.config;
     handleClick(this, this.hass!, config, false);
-    this._toggleMenu();
+    if (this._config!.default_dismiss) {
+      this._toggleMenu();
+    }
   }
 
   private _handleHold(ev) {

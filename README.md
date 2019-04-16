@@ -24,6 +24,7 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 | name | string | **Optional** | Tooltip for main menu | `Menu`
 | icon | string | **Optional** | mdi icon for main menu | `mdi:menu`
 | default_open | boolean | **Optional** | Should the radial be expanded on first load | `false`
+| default_dismiss | boolean | **Optional** | Should the radial be dismissed on click | `true`
 
 ## Items Options
 

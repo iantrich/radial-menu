@@ -2456,18 +2456,15 @@ const handleClick = (node, hass, config, hold) => {
             action: "more-info",
         };
     }
-    console.log(actionConfig);
     switch (actionConfig.action) {
         case "more-info":
             if (config.entity || config.camera_image) {
-                console.log("fireevent");
                 fireEvent(node, "hass-more-info", {
                     entityId: config.entity ? config.entity : config.camera_image,
                 });
             }
             break;
         case "navigate":
-            console.log("navigate");
             if (actionConfig.navigation_path) {
                 navigate(node, actionConfig.navigation_path);
             }
@@ -2492,7 +2489,7 @@ let RadialMenu = class RadialMenu extends LitElement {
         if (!config || !config.items) {
             throw new Error("Invalid configuration");
         }
-        this._config = Object.assign({ icon: "mdi:menu", name: "menu" }, config);
+        this._config = Object.assign({ icon: "mdi:menu", name: "menu", default_dismiss: true }, config);
     }
     getCardSize() {
         return 1;
@@ -2544,7 +2541,9 @@ let RadialMenu = class RadialMenu extends LitElement {
     _handleTap(ev) {
         const config = ev.target.config;
         handleClick(this, this.hass, config, false);
-        this._toggleMenu();
+        if (this._config.default_dismiss) {
+            this._toggleMenu();
+        }
     }
     _handleHold(ev) {
         const config = ev.target.config;

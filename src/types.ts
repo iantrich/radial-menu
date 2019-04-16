@@ -12,6 +12,7 @@ export interface RadialMenuConfig {
   name: string;
   icon: string;
   default_open?: boolean;
+  default_dismiss?: boolean;
   items: RadialMenuItemConfig[];
 }
 
