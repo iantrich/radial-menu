@@ -23,6 +23,7 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 | items | list | **Required** | List of items to display in the radial | `none`
 | name | string | **Optional** | Tooltip for main menu | `Menu`
 | icon | string | **Optional** | mdi icon for main menu | `mdi:menu`
+| entity_picture | string | **Optional** | picture to display | `none`
 | default_open | boolean | **Optional** | Should the radial be expanded on first load | `false`
 | default_dismiss | boolean | **Optional** | Should the radial be dismissed on click | `true`
 
