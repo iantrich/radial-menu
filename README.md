@@ -1,4 +1,4 @@
-# 🔘 Lovelace Radial Menu Element
+# ⭕ Lovelace Radial Menu Element
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
