@@ -45,14 +45,17 @@ class RadialMenu extends LitElement {
           ${this._config.items.map((item, index) => {
             return item.entity_picture
               ? html`
-                  <hui-image
+                  <state-badge
                     @click="${this._handleTap}"
                     .config="${item}"
-                    .hass="${this.hass}"
-                    .image="${item.entity_picture}"
-                    .title="${item.name}"
+                    .stateObj="${{
+                      attributes: {
+                        entity_picture: item.entity_picture
+                      },
+                      entity_id: item.entity
+                    }}"
                     style="
-                left:calc(${(
+                left:${(
                       50 -
                       35 *
                         Math.cos(
@@ -62,8 +65,8 @@ class RadialMenu extends LitElement {
                               index *
                               Math.PI
                         )
-                    ).toFixed(4) + "%"} - 10px);
-                top:calc(${(
+                    ).toFixed(4) + "%"};
+                top:${(
                       50 +
                       35 *
                         Math.sin(
@@ -73,8 +76,8 @@ class RadialMenu extends LitElement {
                               index *
                               Math.PI
                         )
-                    ).toFixed(4) + "%"} - 10px);"
-                  ></hui-image>
+                    ).toFixed(4) + "%"};"
+                  ></state-badge>
                 `
               : html`
                   <ha-icon
@@ -111,13 +114,16 @@ class RadialMenu extends LitElement {
         </div>
         ${this._config.entity_picture
           ? html`
-              <hui-image
+              <state-badge
                 class="menu-button"
-                .hass="${this.hass}"
-                .image="${this._config.entity_picture}"
-                .title="${this._config.name}"
                 @click="${this._toggleMenu}"
-              ></hui-image>
+                .stateObj="${{
+                      attributes: {
+                        entity_picture: this._config.entity_picture
+                      },
+                      entity_id: "sensor.fake"
+                    }}"
+              ></state-badge>
             `
           : html`
               <ha-icon
@@ -185,7 +191,7 @@ class RadialMenu extends LitElement {
       }
 
       .circle ha-icon,
-      .circle hui-image {
+      .circle state-badge {
         text-decoration: none;
         display: block;
         height: 40px;
@@ -198,20 +204,16 @@ class RadialMenu extends LitElement {
         border-radius: 50%;
       }
 
-      .circle hui-image {
-        padding: 10px;
-      }
-
       .circle ha-icon:hover {
         color: var(--accent-color);
       }
 
-      .circle hui-image:hover {
+      .circle state-badge:hover {
         background-color: var(--secondary-background-color);
       }
 
       ha-icon,
-      hui-image {
+      state-badge {
         cursor: pointer;
         color: var(--primary-color);
       }
@@ -222,8 +224,6 @@ class RadialMenu extends LitElement {
 
       .menu-button {
         position: absolute;
-        top: calc(50% - 30px);
-        left: calc(50% - 30px);
         text-decoration: none;
         text-align: center;
         border-radius: 50%;
@@ -231,6 +231,16 @@ class RadialMenu extends LitElement {
         height: 40px;
         width: 40px;
         line-height: 40px;
+      }
+
+      state-badge.menu-button {
+        top: calc(50% - 20px);
+        left: calc(50% - 20px);
+      }
+
+      ha-icon.menu-button {
+        top: calc(50% - 30px);
+        left: calc(50% - 30px);
         padding: 10px;
       }
 
