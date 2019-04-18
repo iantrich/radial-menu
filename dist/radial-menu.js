@@ -2511,7 +2511,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                     attributes: {
                         entity_picture: item.entity_picture
                     },
-                    entity_id: item.entity
+                    entity_id: "sensor.fake"
                 }}"
                     style="
                 left:${(50 -
