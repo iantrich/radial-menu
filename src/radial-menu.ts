@@ -130,6 +130,7 @@ class RadialMenu extends LitElement {
                 @ha-click="${this._handleTap}"
                 @ha-hold="${this._handleHold}"
                 .longpress="${longPress()}"
+                .config="${this._config}"
                 .stateObj="${{
                   attributes: {
                     entity_picture: this._config.entity_picture
