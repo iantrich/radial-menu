@@ -29,6 +29,10 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 | entity_picture | string | **Optional** | picture to display | `none`
 | default_open | boolean | **Optional** | Should the radial be expanded on first load | `false`
 | default_dismiss | boolean | **Optional** | Should the radial be dismissed on click | `true`
+| entity | string | **Optional** | Home Assistant entity ID (used for `more-info` action) | `none`
+| tap_action | object | **Optional** | Action to take on tap | `action: toggle-menu`
+| hold_action | object | **Optional** | Action to take on hold | `none`
+
 
 ## Items Options
 
@@ -39,15 +43,18 @@ This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home 
 | icon | string | **Optional** | mdi icon for main menu | `none`
 | entity_picture | string | **Optional** | picture to display | `none`
 | tap_action | object | **Optional** | Action to take on tap | `action: more-info`
+| hold_action | object | **Optional** | Action to take on hold | `none`
 
 ## Action Options
 
 | Name | Type | Requirement | Description | Default
 | ---- | ---- | ------- | ----------- | -------
-| action | string | **Required** | Action to perform (more-info, toggle, call-service, navigate, none) | `more-info`
+| action | string | **Required** | Action to perform (toggle-menu, more-info, toggle, call-service, navigate url, none) | `toggle-menu` for menu and `more-info` for items
 | navigation_path | string | **Optional** | Path to navigate to (e.g. /lovelace/0/) when action defined as navigate | `none`
+| url | string | **Optional** | URL to open on click when action is url. The URL will open in a new tab | `none`
 | service | string | **Optional** | Service to call (e.g. media_player.media_play_pause) when action defined as call-service | `none`
 | service_data | object | **Optional** | Service data to include (e.g. entity_id: media_player.bedroom) when action defined as call-service | `none`
+| haptic | string | **Optional** | Haptic feedback for the [Beta IOS App](http://home-assistant.io/ios/beta) _success, warning, failure, light, medium, heavy, selection_ | `none`
 
 ## Installation
 
@@ -80,12 +87,20 @@ Add a custom element in your `ui-lovelace.yaml` or in the UI Editor as a Manual 
 type: 'custom:radial-menu'
 icon: 'mdi:home'
 name: 'Home'
+default_open: true
+dismiss_default: false
+hold_action:
+  action: url
+  url: https://www.home-assistant.io
 items:
   - entity: light.bed_light
     icon: 'mdi:flash'
     name: Bedroom Light
     tap_action:
       action: toggle
+      haptic: true
+    hold_action:
+      action: more-info
   - entity: alarm_control_panel.ha_alarm
     icon: 'mdi:alarm-light'
     name: Alarm Panel
@@ -98,6 +113,13 @@ items:
       service: timer.start
       service_data:
         entity_id: timer.laundry
+      haptic: true
+    hold_action:
+      action: call-service
+      service: timer.pause
+      service_data:
+        entity_id: timer.laundry
+      haptic: true
   - entity_picture: '/local/headphones.png'
     name: Podcasts
     tap_action:

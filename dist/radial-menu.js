@@ -34,6 +34,32 @@ function __decorate(decorators, target, key, desc) {
  * http://polymer.github.io/PATENTS.txt
  */
 const directives = new WeakMap();
+/**
+ * Brands a function as a directive so that lit-html will call the function
+ * during template rendering, rather than passing as a value.
+ *
+ * @param f The directive factory function. Must be a function that returns a
+ * function of the signature `(part: Part) => void`. The returned function will
+ * be called with the part object
+ *
+ * @example
+ *
+ * ```
+ * import {directive, html} from 'lit-html';
+ *
+ * const immutable = directive((v) => (part) => {
+ *   if (part.value !== v) {
+ *     part.setValue(v)
+ *   }
+ * });
+ * ```
+ */
+// tslint:disable-next-line:no-any
+const directive = (f) => ((...args) => {
+    const d = f(...args);
+    directives.set(d, true);
+    return d;
+});
 const isDirective = (o) => {
     return typeof o === 'function' && directives.has(o);
 };
@@ -2443,6 +2469,13 @@ const toggleEntity = (hass, entityId) => {
     return turnOnOffEntity(hass, entityId, turnOn);
 };
 
+/**
+ * Utility function that enables haptic feedback
+ */
+const forwardHaptic = (el, hapticType) => {
+    fireEvent(el, "haptic", hapticType);
+};
+
 const handleClick = (node, hass, config, hold) => {
     let actionConfig;
     if (hold && config.hold_action) {
@@ -2458,20 +2491,31 @@ const handleClick = (node, hass, config, hold) => {
     }
     switch (actionConfig.action) {
         case "more-info":
-            if (config.entity || config.camera_image) {
+            if (config.entity) {
                 fireEvent(node, "hass-more-info", {
-                    entityId: config.entity ? config.entity : config.camera_image,
+                    entityId: config.entity,
                 });
+                if (actionConfig.haptic)
+                    forwardHaptic(node, actionConfig.haptic);
             }
             break;
         case "navigate":
             if (actionConfig.navigation_path) {
                 navigate(node, actionConfig.navigation_path);
+                if (actionConfig.haptic)
+                    forwardHaptic(node, actionConfig.haptic);
             }
+            break;
+        case 'url':
+            actionConfig.url && window.open(actionConfig.url);
+            if (actionConfig.haptic)
+                forwardHaptic(node, actionConfig.haptic);
             break;
         case "toggle":
             if (config.entity) {
                 toggleEntity(hass, config.entity);
+                if (actionConfig.haptic)
+                    forwardHaptic(node, actionConfig.haptic);
             }
             break;
         case "call-service": {
@@ -2480,16 +2524,170 @@ const handleClick = (node, hass, config, hold) => {
             }
             const [domain, service] = actionConfig.service.split(".", 2);
             hass.callService(domain, service, actionConfig.service_data);
+            if (actionConfig.haptic)
+                forwardHaptic(node, actionConfig.haptic);
         }
     }
 };
+
+// See https://github.com/home-assistant/home-assistant-polymer/pull/2457
+// on how to undo mwc -> paper migration
+// import "@material/mwc-ripple";
+const isTouch = "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0;
+class LongPress extends HTMLElement {
+    constructor() {
+        super();
+        this.holdTime = 500;
+        this.ripple = document.createElement("paper-ripple");
+        this.timer = undefined;
+        this.held = false;
+        this.cooldownStart = false;
+        this.cooldownEnd = false;
+    }
+    connectedCallback() {
+        Object.assign(this.style, {
+            borderRadius: "50%",
+            position: "absolute",
+            width: isTouch ? "100px" : "50px",
+            height: isTouch ? "100px" : "50px",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+        });
+        this.appendChild(this.ripple);
+        this.ripple.style.color = "#03a9f4"; // paper-ripple
+        this.ripple.style.color = "var(--primary-color)"; // paper-ripple
+        // this.ripple.primary = true;
+        [
+            "touchcancel",
+            "mouseout",
+            "mouseup",
+            "touchmove",
+            "mousewheel",
+            "wheel",
+            "scroll",
+        ].forEach((ev) => {
+            document.addEventListener(ev, () => {
+                clearTimeout(this.timer);
+                this.stopAnimation();
+                this.timer = undefined;
+            }, { passive: true });
+        });
+    }
+    bind(element) {
+        if (element.longPress) {
+            return;
+        }
+        element.longPress = true;
+        element.addEventListener("contextmenu", (ev) => {
+            const e = ev || window.event;
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            e.cancelBubble = true;
+            e.returnValue = false;
+            return false;
+        });
+        const clickStart = (ev) => {
+            if (this.cooldownStart) {
+                return;
+            }
+            this.held = false;
+            let x;
+            let y;
+            if (ev.touches) {
+                x = ev.touches[0].pageX;
+                y = ev.touches[0].pageY;
+            }
+            else {
+                x = ev.pageX;
+                y = ev.pageY;
+            }
+            this.timer = window.setTimeout(() => {
+                this.startAnimation(x, y);
+                this.held = true;
+            }, this.holdTime);
+            this.cooldownStart = true;
+            window.setTimeout(() => (this.cooldownStart = false), 100);
+        };
+        const clickEnd = (ev) => {
+            if (this.cooldownEnd ||
+                (["touchend", "touchcancel"].includes(ev.type) &&
+                    this.timer === undefined)) {
+                return;
+            }
+            clearTimeout(this.timer);
+            this.stopAnimation();
+            this.timer = undefined;
+            if (this.held) {
+                element.dispatchEvent(new Event("ha-hold"));
+            }
+            else {
+                element.dispatchEvent(new Event("ha-click"));
+            }
+            this.cooldownEnd = true;
+            window.setTimeout(() => (this.cooldownEnd = false), 100);
+        };
+        element.addEventListener("touchstart", clickStart, { passive: true });
+        element.addEventListener("touchend", clickEnd);
+        element.addEventListener("touchcancel", clickEnd);
+        element.addEventListener("mousedown", clickStart, { passive: true });
+        element.addEventListener("click", clickEnd);
+    }
+    startAnimation(x, y) {
+        Object.assign(this.style, {
+            left: `${x}px`,
+            top: `${y}px`,
+            display: null,
+        });
+        this.ripple.holdDown = true; // paper-ripple
+        this.ripple.simulatedRipple(); // paper-ripple
+        // this.ripple.disabled = false;
+        // this.ripple.active = true;
+        // this.ripple.unbounded = true;
+    }
+    stopAnimation() {
+        this.ripple.holdDown = false; // paper-ripple
+        // this.ripple.active = false;
+        // this.ripple.disabled = true;
+        this.style.display = "none";
+    }
+}
+customElements.define("long-press-button-card", LongPress);
+const getLongPress = () => {
+    const body = document.body;
+    if (body.querySelector("long-press-button-card")) {
+        return body.querySelector("long-press-button-card");
+    }
+    const longpress = document.createElement("long-press-button-card");
+    body.appendChild(longpress);
+    return longpress;
+};
+const longPressBind = (element) => {
+    const longpress = getLongPress();
+    if (!longpress) {
+        return;
+    }
+    longpress.bind(element);
+};
+const longPress = directive(() => (part) => {
+    longPressBind(part.committer.element);
+});
 
 let RadialMenu = class RadialMenu extends LitElement {
     setConfig(config) {
         if (!config || !config.items) {
             throw new Error("Invalid configuration");
         }
-        this._config = Object.assign({ icon: "mdi:menu", name: "menu", default_dismiss: true }, config);
+        this._config = Object.assign({ icon: "mdi:menu", name: "menu", tap_action: {
+                action: "toggle-menu"
+            }, hold_action: {
+                action: "none"
+            }, default_dismiss: true }, config);
     }
     getCardSize() {
         return 1;
@@ -2505,7 +2703,9 @@ let RadialMenu = class RadialMenu extends LitElement {
             return item.entity_picture
                 ? html `
                   <state-badge
-                    @click="${this._handleTap}"
+                    @ha-click="${this._handleTap}"
+                    @ha-hold="${this._handleHold}"
+                    .longpress="${longPress()}"
                     .config="${item}"
                     .stateObj="${{
                     attributes: {
@@ -2532,7 +2732,9 @@ let RadialMenu = class RadialMenu extends LitElement {
                 `
                 : html `
                   <ha-icon
-                    @click="${this._handleTap}"
+                    @ha-click="${this._handleTap}"
+                    @ha-hold="${this._handleHold}"
+                    .longpress="${longPress()}"
                     .config="${item}"
                     .icon="${item.icon}"
                     .title="${item.name}"
@@ -2559,7 +2761,9 @@ let RadialMenu = class RadialMenu extends LitElement {
             ? html `
               <state-badge
                 class="menu-button"
-                @click="${this._toggleMenu}"
+                @ha-click="${this._handleTap}"
+                @ha-hold="${this._handleHold}"
+                .longpress="${longPress()}"
                 .stateObj="${{
                 attributes: {
                     entity_picture: this._config.entity_picture
@@ -2573,7 +2777,10 @@ let RadialMenu = class RadialMenu extends LitElement {
                 class="menu-button"
                 .icon="${this._config.icon}"
                 .title="${this._config.name}"
-                @click="${this._toggleMenu}"
+                .config="${this._config}"
+                @ha-click="${this._handleTap}"
+                @ha-hold="${this._handleHold}"
+                .longpress="${longPress()}"
               ></ha-icon>
             `}
       </nav>
@@ -2589,14 +2796,31 @@ let RadialMenu = class RadialMenu extends LitElement {
     }
     _handleTap(ev) {
         const config = ev.target.config;
-        handleClick(this, this.hass, config, false);
-        if (this._config.default_dismiss) {
+        if (config &&
+            config.tap_action &&
+            config.tap_action.action === "toggle-menu") {
             this._toggleMenu();
+        }
+        else {
+            handleClick(this, this.hass, config, false);
+            if (this._config.default_dismiss) {
+                this._toggleMenu();
+            }
         }
     }
     _handleHold(ev) {
         const config = ev.target.config;
-        handleClick(this, this.hass, config, true);
+        if (config &&
+            config.hold_action &&
+            config.hold_action.action === "toggle-menu") {
+            this._toggleMenu();
+        }
+        else {
+            handleClick(this, this.hass, config, true);
+            if (this._config.default_dismiss) {
+                this._toggleMenu();
+            }
+        }
     }
     static get styles() {
         return css `

@@ -2,6 +2,7 @@ import { HomeAssistant, ActionConfig } from "./types";
 import { fireEvent } from "./fire_event";
 import { navigate } from "./navigate";
 import { toggleEntity } from "./toggle-entity";
+import { forwardHaptic } from "./haptic";
 
 export const handleClick = (
   node: HTMLElement,
@@ -30,20 +31,27 @@ export const handleClick = (
 
   switch (actionConfig.action) {
     case "more-info":
-      if (config.entity || config.camera_image) {
+      if (config.entity) {
         fireEvent(node, "hass-more-info", {
-          entityId: config.entity ? config.entity : config.camera_image!,
+          entityId: config.entity,
         });
+        if (actionConfig.haptic) forwardHaptic(node, actionConfig.haptic);
       }
       break;
     case "navigate":
       if (actionConfig.navigation_path) {
         navigate(node, actionConfig.navigation_path);
+        if (actionConfig.haptic) forwardHaptic(node, actionConfig.haptic);
       }
+      break;
+    case 'url':
+      actionConfig.url && window.open(actionConfig.url);
+      if (actionConfig.haptic) forwardHaptic(node, actionConfig.haptic);
       break;
     case "toggle":
       if (config.entity) {
         toggleEntity(hass, config.entity!);
+        if (actionConfig.haptic) forwardHaptic(node, actionConfig.haptic);
       }
       break;
     case "call-service": {
@@ -52,6 +60,7 @@ export const handleClick = (
       }
       const [domain, service] = actionConfig.service.split(".", 2);
       hass.callService(domain, service, actionConfig.service_data);
+      if (actionConfig.haptic) forwardHaptic(node, actionConfig.haptic);
     }
   }
 };

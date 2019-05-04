@@ -6,6 +6,7 @@ import {
   MessageBase,
   HassServices
 } from "home-assistant-js-websocket";
+import { HapticType } from "./haptic";
 
 export interface RadialMenuConfig {
   type: string;
@@ -14,6 +15,8 @@ export interface RadialMenuConfig {
   entity_picture?: string;
   default_open?: boolean;
   default_dismiss?: boolean;
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
   items: RadialMenuItemConfig[];
 }
 
@@ -23,14 +26,22 @@ export interface RadialMenuItemConfig {
   name?: string;
   entity?: string;
   tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
 }
 
 export interface ToggleActionConfig {
   action: "toggle";
+  haptic?: HapticType;
+}
+
+export interface ToggleMenuActionConfig {
+  action: "toggle-menu";
+  haptic?: HapticType;
 }
 
 export interface CallServiceActionConfig {
   action: "call-service";
+  haptic?: HapticType;
   service: string;
   service_data?: {
     entity_id?: string | [string];
@@ -40,11 +51,20 @@ export interface CallServiceActionConfig {
 
 export interface NavigateActionConfig {
   action: "navigate";
+  haptic?: HapticType;
   navigation_path: string;
 }
 
 export interface MoreInfoActionConfig {
   action: "more-info";
+  haptic?: HapticType;
+  entity?: string;
+}
+
+export interface UrlActionConfig {
+  action: "url";
+  haptic?: HapticType;
+  url: string;
 }
 
 export interface NoActionConfig {
@@ -53,9 +73,11 @@ export interface NoActionConfig {
 
 export type ActionConfig =
   | ToggleActionConfig
+  | ToggleMenuActionConfig
   | CallServiceActionConfig
   | NavigateActionConfig
   | MoreInfoActionConfig
+  | UrlActionConfig
   | NoActionConfig;
 
 declare global {

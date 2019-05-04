@@ -10,6 +10,7 @@ import {
 
 import { RadialMenuConfig, HomeAssistant } from "./types";
 import { handleClick } from "./handle-click";
+import { longPress } from "./long-press";
 
 @customElement("radial-menu")
 class RadialMenu extends LitElement {
@@ -25,6 +26,12 @@ class RadialMenu extends LitElement {
     this._config = {
       icon: "mdi:menu",
       name: "menu",
+      tap_action: {
+        action: "toggle-menu"
+      },
+      hold_action : {
+        action: "none"
+      },
       default_dismiss: true,
       ...config
     };
@@ -46,7 +53,9 @@ class RadialMenu extends LitElement {
             return item.entity_picture
               ? html`
                   <state-badge
-                    @click="${this._handleTap}"
+                    @ha-click="${this._handleTap}"
+                    @ha-hold="${this._handleHold}"
+                    .longpress="${longPress()}"
                     .config="${item}"
                     .stateObj="${{
                       attributes: {
@@ -81,7 +90,9 @@ class RadialMenu extends LitElement {
                 `
               : html`
                   <ha-icon
-                    @click="${this._handleTap}"
+                    @ha-click="${this._handleTap}"
+                    @ha-hold="${this._handleHold}"
+                    .longpress="${longPress()}"
                     .config="${item}"
                     .icon="${item.icon}"
                     .title="${item.name}"
@@ -116,13 +127,15 @@ class RadialMenu extends LitElement {
           ? html`
               <state-badge
                 class="menu-button"
-                @click="${this._toggleMenu}"
+                @ha-click="${this._handleTap}"
+                @ha-hold="${this._handleHold}"
+                .longpress="${longPress()}"
                 .stateObj="${{
-                      attributes: {
-                        entity_picture: this._config.entity_picture
-                      },
-                      entity_id: "sensor.fake"
-                    }}"
+                  attributes: {
+                    entity_picture: this._config.entity_picture
+                  },
+                  entity_id: "sensor.fake"
+                }}"
               ></state-badge>
             `
           : html`
@@ -130,7 +143,10 @@ class RadialMenu extends LitElement {
                 class="menu-button"
                 .icon="${this._config.icon}"
                 .title="${this._config.name}"
-                @click="${this._toggleMenu}"
+                .config="${this._config}"
+                @ha-click="${this._handleTap}"
+                @ha-hold="${this._handleHold}"
+                .longpress="${longPress()}"
               ></ha-icon>
             `}
       </nav>
@@ -149,15 +165,34 @@ class RadialMenu extends LitElement {
 
   private _handleTap(ev) {
     const config = ev.target.config;
-    handleClick(this, this.hass!, config, false);
-    if (this._config!.default_dismiss) {
+    if (
+      config &&
+      config.tap_action &&
+      config.tap_action.action === "toggle-menu"
+    ) {
       this._toggleMenu();
+    } else {
+      handleClick(this, this.hass!, config, false);
+      if (this._config!.default_dismiss) {
+        this._toggleMenu();
+      }
     }
   }
 
   private _handleHold(ev) {
     const config = ev.target.config;
-    handleClick(this, this.hass!, config, true);
+    if (
+      config &&
+      config.hold_action &&
+      config.hold_action.action === "toggle-menu"
+    ) {
+      this._toggleMenu();
+    } else {
+      handleClick(this, this.hass!, config, true);
+      if (this._config!.default_dismiss) {
+        this._toggleMenu();
+      }
+    }
   }
 
   static get styles(): CSSResult {
