@@ -2657,13 +2657,13 @@ class LongPress extends HTMLElement {
         this.style.display = "none";
     }
 }
-customElements.define("long-press-button-card", LongPress);
+customElements.define("long-press-radial", LongPress);
 const getLongPress = () => {
     const body = document.body;
-    if (body.querySelector("long-press-button-card")) {
-        return body.querySelector("long-press-button-card");
+    if (body.querySelector("long-press-radial")) {
+        return body.querySelector("long-press-radial");
     }
-    const longpress = document.createElement("long-press-button-card");
+    const longpress = document.createElement("long-press-radial");
     body.appendChild(longpress);
     return longpress;
 };
