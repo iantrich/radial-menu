@@ -9,8 +9,7 @@ import {
 } from "lit-element";
 
 import { RadialMenuConfig } from "./types";
-import { longPress } from "./long-press";
-import { HomeAssistant, handleClick } from "custom-card-helpers";
+import { HomeAssistant, handleClick, longPress } from "custom-card-helpers";
 
 @customElement("radial-menu")
 class RadialMenu extends LitElement {

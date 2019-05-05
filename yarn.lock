@@ -511,12 +511,13 @@ cross-spawn@^6.0.5:
     shebang-command "^1.2.0"
     which "^1.2.9"
 
-custom-card-helpers@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/custom-card-helpers/-/custom-card-helpers-1.0.5.tgz#09b953387625de598db4e171b5d641394ba61bbc"
-  integrity sha512-jLnzy0xNXdfT8E49WIKUksS97dtlCjCgUg0/eX5TjgsKuDAEVO8B4f1K/bE+StbZgC32J/c5M5Lune8g6T4jFA==
+custom-card-helpers@^1.0.6:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/custom-card-helpers/-/custom-card-helpers-1.0.6.tgz#d3a35a21dcf603560a8dac9fc906fe09e58a9731"
+  integrity sha512-0ZZApMr0hjA65pkAhRGYDEHJZ0QBoEwtwjywnTGDom3ctYTDrfIFUndPJlW0Q+3mPsGzljN5c/xoDNCXiVaS7Q==
   dependencies:
-    home-assistant-js-websocket "^3.4.0"
+    home-assistant-js-websocket "^4.0.0"
+    lit-html "^1.0.0"
     superstruct "^0.6.0"
 
 debug@^2.2.0, debug@^2.3.3, debug@^2.6.8, debug@^2.6.9:
@@ -1088,6 +1089,11 @@ home-assistant-js-websocket@^3.4.0:
   version "3.4.0"
   resolved "https://registry.yarnpkg.com/home-assistant-js-websocket/-/home-assistant-js-websocket-3.4.0.tgz#3ba47cc8f8b7620619a675e7488d6108e8733a70"
   integrity sha512-Uq5/KIAh4kF13MKzMyd0efBDoU+pNF0O1CfdGpSmT3La3tpt5h+ykpUYlq/vEBj6WwzU6iv3Czt4UK1o0IJHcA==
+
+home-assistant-js-websocket@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/home-assistant-js-websocket/-/home-assistant-js-websocket-4.0.0.tgz#8e9b25f1b694520c8434ff7b25276fc02c15fa82"
+  integrity sha512-yWW9TKmr2Yj11+sSOdm+En7d8UFA68NIF+x7E7npUiMsb1+oBfSou5HvcZMf2S1eT4/YaDJI3ZIMkjb54Jv6IA==
 
 hosted-git-info@^2.1.4:
   version "2.7.1"

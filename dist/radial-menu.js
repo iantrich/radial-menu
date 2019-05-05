@@ -2369,155 +2369,7 @@ LitElement.finalized = true;
  */
 LitElement.render = render$1;
 
-// See https://github.com/home-assistant/home-assistant-polymer/pull/2457
-// on how to undo mwc -> paper migration
-// import "@material/mwc-ripple";
-const isTouch = "ontouchstart" in window ||
-    navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0;
-class LongPress extends HTMLElement {
-    constructor() {
-        super();
-        this.holdTime = 500;
-        this.ripple = document.createElement("paper-ripple");
-        this.timer = undefined;
-        this.held = false;
-        this.cooldownStart = false;
-        this.cooldownEnd = false;
-    }
-    connectedCallback() {
-        Object.assign(this.style, {
-            borderRadius: "50%",
-            position: "absolute",
-            width: isTouch ? "100px" : "50px",
-            height: isTouch ? "100px" : "50px",
-            transform: "translate(-50%, -50%)",
-            pointerEvents: "none",
-        });
-        this.appendChild(this.ripple);
-        this.ripple.style.color = "#03a9f4"; // paper-ripple
-        this.ripple.style.color = "var(--primary-color)"; // paper-ripple
-        // this.ripple.primary = true;
-        [
-            "touchcancel",
-            "mouseout",
-            "mouseup",
-            "touchmove",
-            "mousewheel",
-            "wheel",
-            "scroll",
-        ].forEach((ev) => {
-            document.addEventListener(ev, () => {
-                clearTimeout(this.timer);
-                this.stopAnimation();
-                this.timer = undefined;
-            }, { passive: true });
-        });
-    }
-    bind(element) {
-        if (element.longPress) {
-            return;
-        }
-        element.longPress = true;
-        element.addEventListener("contextmenu", (ev) => {
-            const e = ev || window.event;
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            e.cancelBubble = true;
-            e.returnValue = false;
-            return false;
-        });
-        const clickStart = (ev) => {
-            if (this.cooldownStart) {
-                return;
-            }
-            this.held = false;
-            let x;
-            let y;
-            if (ev.touches) {
-                x = ev.touches[0].pageX;
-                y = ev.touches[0].pageY;
-            }
-            else {
-                x = ev.pageX;
-                y = ev.pageY;
-            }
-            this.timer = window.setTimeout(() => {
-                this.startAnimation(x, y);
-                this.held = true;
-            }, this.holdTime);
-            this.cooldownStart = true;
-            window.setTimeout(() => (this.cooldownStart = false), 100);
-        };
-        const clickEnd = (ev) => {
-            if (this.cooldownEnd ||
-                (["touchend", "touchcancel"].includes(ev.type) &&
-                    this.timer === undefined)) {
-                return;
-            }
-            clearTimeout(this.timer);
-            this.stopAnimation();
-            this.timer = undefined;
-            if (this.held) {
-                element.dispatchEvent(new Event("ha-hold"));
-            }
-            else {
-                element.dispatchEvent(new Event("ha-click"));
-            }
-            this.cooldownEnd = true;
-            window.setTimeout(() => (this.cooldownEnd = false), 100);
-        };
-        element.addEventListener("touchstart", clickStart, { passive: true });
-        element.addEventListener("touchend", clickEnd);
-        element.addEventListener("touchcancel", clickEnd);
-        element.addEventListener("mousedown", clickStart, { passive: true });
-        element.addEventListener("click", clickEnd);
-    }
-    startAnimation(x, y) {
-        Object.assign(this.style, {
-            left: `${x}px`,
-            top: `${y}px`,
-            display: null,
-        });
-        this.ripple.holdDown = true; // paper-ripple
-        this.ripple.simulatedRipple(); // paper-ripple
-        // this.ripple.disabled = false;
-        // this.ripple.active = true;
-        // this.ripple.unbounded = true;
-    }
-    stopAnimation() {
-        this.ripple.holdDown = false; // paper-ripple
-        // this.ripple.active = false;
-        // this.ripple.disabled = true;
-        this.style.display = "none";
-    }
-}
-customElements.define("long-press-radial", LongPress);
-const getLongPress = () => {
-    const body = document.body;
-    if (body.querySelector("long-press-radial")) {
-        return body.querySelector("long-press-radial");
-    }
-    const longpress = document.createElement("long-press-radial");
-    body.appendChild(longpress);
-    return longpress;
-};
-const longPressBind = (element) => {
-    const longpress = getLongPress();
-    if (!longpress) {
-        return;
-    }
-    longpress.bind(element);
-};
-const longPress = directive(() => (part) => {
-    longPressBind(part.committer.element);
-});
-
-var o=["closed","locked","off"],p=function(e,t,a,i){i=i||{},a=null==a?{}:a;var n=new Event(t,{bubbles:void 0===i.bubbles||i.bubbles,cancelable:Boolean(i.cancelable),composed:void 0===i.composed||i.composed});return n.detail=a,e.dispatchEvent(n),n},h=function(e,t,a){void 0===a&&(a=!1),a?history.replaceState(null,"",t):history.pushState(null,"",t),p(window,"location-changed",{replace:a});},v=function(e,t,a){void 0===a&&(a=!0);var i,n=function(e){return e.substr(0,e.indexOf("."))}(t),c="group"===n?"homeassistant":n;switch(n){case"lock":i=a?"unlock":"lock";break;case"cover":i=a?"open_cover":"close_cover";break;default:i=a?"turn_on":"turn_off";}return e.callService(c,i,{entity_id:t})},_=function(e,t){var a=o.includes(e.states[t].state);return v(e,t,a)},d=function(e,t){p(e,"haptic",t);},b=function(e,t,a,i){var n;switch(i&&a.hold_action?n=a.hold_action:!i&&a.tap_action&&(n=a.tap_action),n||(n={action:"more-info"}),n.action){case"more-info":a.entity&&(p(e,"hass-more-info",{entityId:a.entity}),n.haptic&&d(e,n.haptic));break;case"navigate":n.navigation_path&&(h(0,n.navigation_path),n.haptic&&d(e,n.haptic));break;case"url":n.url&&window.open(n.url),n.haptic&&d(e,n.haptic);break;case"toggle":a.entity&&(_(t,a.entity),n.haptic&&d(e,n.haptic));break;case"call-service":if(!n.service)return;var c=n.service.split(".",2);t.callService(c[0],c[1],n.service_data),n.haptic&&d(e,n.haptic);}};
+var c=["closed","locked","off"],d=function(t,e,o,n){n=n||{},o=null==o?{}:o;var i=new Event(e,{bubbles:void 0===n.bubbles||n.bubbles,cancelable:Boolean(n.cancelable),composed:void 0===n.composed||n.composed});return i.detail=o,t.dispatchEvent(i),i},h=function(t,e,o){void 0===o&&(o=!1),o?history.replaceState(null,"",e):history.pushState(null,"",e),d(window,"location-changed",{replace:o});},m=function(t,e,o){void 0===o&&(o=!0);var n,i=function(t){return t.substr(0,t.indexOf("."))}(e),a="group"===i?"homeassistant":i;switch(i){case"lock":n=o?"unlock":"lock";break;case"cover":n=o?"open_cover":"close_cover";break;default:n=o?"turn_on":"turn_off";}return t.callService(a,n,{entity_id:e})},v=function(t,e){var o=c.includes(t.states[e].state);return m(t,e,o)},f=function(t,e){d(t,"haptic",e);},w=function(t,e,o,n){var i;switch(n&&o.hold_action?i=o.hold_action:!n&&o.tap_action&&(i=o.tap_action),i||(i={action:"more-info"}),i.action){case"more-info":o.entity&&(d(t,"hass-more-info",{entityId:o.entity}),i.haptic&&f(t,i.haptic));break;case"navigate":i.navigation_path&&(h(0,i.navigation_path),i.haptic&&f(t,i.haptic));break;case"url":i.url&&window.open(i.url),i.haptic&&f(t,i.haptic);break;case"toggle":o.entity&&(v(e,o.entity),i.haptic&&f(t,i.haptic));break;case"call-service":if(!i.service)return;var a=i.service.split(".",2);e.callService(a[0],a[1],i.service_data),i.haptic&&f(t,i.haptic);}},g="ontouchstart"in window||navigator.maxTouchPoints>0||navigator.msMaxTouchPoints>0,b=function(t){function e(){t.call(this),this.holdTime=500,this.ripple=document.createElement("paper-ripple"),this.timer=void 0,this.held=!1,this.cooldownStart=!1,this.cooldownEnd=!1;}return t&&(e.__proto__=t),(e.prototype=Object.create(t&&t.prototype)).constructor=e,e.prototype.connectedCallback=function(){var t=this;Object.assign(this.style,{borderRadius:"50%",position:"absolute",width:g?"100px":"50px",height:g?"100px":"50px",transform:"translate(-50%, -50%)",pointerEvents:"none"}),this.appendChild(this.ripple),this.ripple.style.color="#03a9f4",this.ripple.style.color="var(--primary-color)",["touchcancel","mouseout","mouseup","touchmove","mousewheel","wheel","scroll"].forEach(function(e){document.addEventListener(e,function(){clearTimeout(t.timer),t.stopAnimation(),t.timer=void 0;},{passive:!0});});},e.prototype.bind=function(t){var e=this;if(!t.longPress){t.longPress=!0,t.addEventListener("contextmenu",function(t){var e=t||window.event;return e.preventDefault&&e.preventDefault(),e.stopPropagation&&e.stopPropagation(),e.cancelBubble=!0,e.returnValue=!1,!1});var o=function(t){var o,n;e.cooldownStart||(e.held=!1,t.touches?(o=t.touches[0].pageX,n=t.touches[0].pageY):(o=t.pageX,n=t.pageY),e.timer=window.setTimeout(function(){e.startAnimation(o,n),e.held=!0;},e.holdTime),e.cooldownStart=!0,window.setTimeout(function(){return e.cooldownStart=!1},100));},n=function(o){e.cooldownEnd||["touchend","touchcancel"].includes(o.type)&&void 0===e.timer||(clearTimeout(e.timer),e.stopAnimation(),e.timer=void 0,t.dispatchEvent(e.held?new Event("ha-hold"):new Event("ha-click")),e.cooldownEnd=!0,window.setTimeout(function(){return e.cooldownEnd=!1},100));};t.addEventListener("touchstart",o,{passive:!0}),t.addEventListener("touchend",n),t.addEventListener("touchcancel",n),t.addEventListener("mousedown",o,{passive:!0}),t.addEventListener("click",n);}},e.prototype.startAnimation=function(t,e){Object.assign(this.style,{left:t+"px",top:e+"px",display:null}),this.ripple.holdDown=!0,this.ripple.simulatedRipple();},e.prototype.stopAnimation=function(){this.ripple.holdDown=!1,this.style.display="none";},e}(HTMLElement);customElements.get("long-press")||customElements.define("long-press",b);var _=function(t){var e=function(){var t=document.body;if(t.querySelector("long-press"))return t.querySelector("long-press");var e=document.createElement("long-press");return t.appendChild(e),e}();e&&e.bind(t);},y=directive(function(){return function(t){_(t.committer.element);}});
 
 let RadialMenu = class RadialMenu extends LitElement {
     setConfig(config) {
@@ -2546,7 +2398,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                   <state-badge
                     @ha-click="${this._handleTap}"
                     @ha-hold="${this._handleHold}"
-                    .longpress="${longPress()}"
+                    .longpress="${y()}"
                     .config="${item}"
                     .stateObj="${{
                     attributes: {
@@ -2575,7 +2427,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                   <ha-icon
                     @ha-click="${this._handleTap}"
                     @ha-hold="${this._handleHold}"
-                    .longpress="${longPress()}"
+                    .longpress="${y()}"
                     .config="${item}"
                     .icon="${item.icon}"
                     .title="${item.name}"
@@ -2604,7 +2456,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                 class="menu-button"
                 @ha-click="${this._handleTap}"
                 @ha-hold="${this._handleHold}"
-                .longpress="${longPress()}"
+                .longpress="${y()}"
                 .config="${this._config}"
                 .stateObj="${{
                 attributes: {
@@ -2622,7 +2474,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                 .config="${this._config}"
                 @ha-click="${this._handleTap}"
                 @ha-hold="${this._handleHold}"
-                .longpress="${longPress()}"
+                .longpress="${y()}"
               ></ha-icon>
             `}
       </nav>
@@ -2644,7 +2496,7 @@ let RadialMenu = class RadialMenu extends LitElement {
             this._toggleMenu();
         }
         else {
-            b(this, this.hass, config, false);
+            w(this, this.hass, config, false);
             if (this._config.default_dismiss) {
                 this._toggleMenu();
             }
@@ -2658,7 +2510,7 @@ let RadialMenu = class RadialMenu extends LitElement {
             this._toggleMenu();
         }
         else {
-            b(this, this.hass, config, true);
+            w(this, this.hass, config, true);
             if (this._config.default_dismiss) {
                 this._toggleMenu();
             }
