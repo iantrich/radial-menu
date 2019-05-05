@@ -2369,167 +2369,6 @@ LitElement.finalized = true;
  */
 LitElement.render = render$1;
 
-// Polymer legacy event helpers used courtesy of the Polymer project.
-//
-// Copyright (c) 2017 The Polymer Authors. All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
-// met:
-//
-//    * Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer.
-//    * Redistributions in binary form must reproduce the above
-// copyright notice, this list of conditions and the following disclaimer
-// in the documentation and/or other materials provided with the
-// distribution.
-//    * Neither the name of Google Inc. nor the names of its
-// contributors may be used to endorse or promote products derived from
-// this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-/**
- * Dispatches a custom event with an optional detail value.
- *
- * @param {string} type Name of event type.
- * @param {*=} detail Detail value containing event-specific
- *   payload.
- * @param {{ bubbles: (boolean|undefined),
- *           cancelable: (boolean|undefined),
- *           composed: (boolean|undefined) }=}
- *  options Object specifying options.  These may include:
- *  `bubbles` (boolean, defaults to `true`),
- *  `cancelable` (boolean, defaults to false), and
- *  `node` on which to fire the event (HTMLElement, defaults to `this`).
- * @return {Event} The new event that was fired.
- */
-const fireEvent = (node, type, detail, options) => {
-    options = options || {};
-    // @ts-ignore
-    detail = detail === null || detail === undefined ? {} : detail;
-    const event = new Event(type, {
-        bubbles: options.bubbles === undefined ? true : options.bubbles,
-        cancelable: Boolean(options.cancelable),
-        composed: options.composed === undefined ? true : options.composed,
-    });
-    event.detail = detail;
-    node.dispatchEvent(event);
-    return event;
-};
-
-const navigate = (_node, path, replace = false) => {
-    if (replace) {
-        history.replaceState(null, "", path);
-    }
-    else {
-        history.pushState(null, "", path);
-    }
-    fireEvent(window, "location-changed", {
-        replace
-    });
-};
-
-/** Constants to be used in the frontend. */
-/** States that we consider "off". */
-const STATES_OFF = ["closed", "locked", "off"];
-
-function computeDomain(entityId) {
-    return entityId.substr(0, entityId.indexOf("."));
-}
-
-const turnOnOffEntity = (hass, entityId, turnOn = true) => {
-    const stateDomain = computeDomain(entityId);
-    const serviceDomain = stateDomain === "group" ? "homeassistant" : stateDomain;
-    let service;
-    switch (stateDomain) {
-        case "lock":
-            service = turnOn ? "unlock" : "lock";
-            break;
-        case "cover":
-            service = turnOn ? "open_cover" : "close_cover";
-            break;
-        default:
-            service = turnOn ? "turn_on" : "turn_off";
-    }
-    return hass.callService(serviceDomain, service, { entity_id: entityId });
-};
-
-const toggleEntity = (hass, entityId) => {
-    const turnOn = STATES_OFF.includes(hass.states[entityId].state);
-    return turnOnOffEntity(hass, entityId, turnOn);
-};
-
-/**
- * Utility function that enables haptic feedback
- */
-const forwardHaptic = (el, hapticType) => {
-    fireEvent(el, "haptic", hapticType);
-};
-
-const handleClick = (node, hass, config, hold) => {
-    let actionConfig;
-    if (hold && config.hold_action) {
-        actionConfig = config.hold_action;
-    }
-    else if (!hold && config.tap_action) {
-        actionConfig = config.tap_action;
-    }
-    if (!actionConfig) {
-        actionConfig = {
-            action: "more-info",
-        };
-    }
-    switch (actionConfig.action) {
-        case "more-info":
-            if (config.entity) {
-                fireEvent(node, "hass-more-info", {
-                    entityId: config.entity,
-                });
-                if (actionConfig.haptic)
-                    forwardHaptic(node, actionConfig.haptic);
-            }
-            break;
-        case "navigate":
-            if (actionConfig.navigation_path) {
-                navigate(node, actionConfig.navigation_path);
-                if (actionConfig.haptic)
-                    forwardHaptic(node, actionConfig.haptic);
-            }
-            break;
-        case 'url':
-            actionConfig.url && window.open(actionConfig.url);
-            if (actionConfig.haptic)
-                forwardHaptic(node, actionConfig.haptic);
-            break;
-        case "toggle":
-            if (config.entity) {
-                toggleEntity(hass, config.entity);
-                if (actionConfig.haptic)
-                    forwardHaptic(node, actionConfig.haptic);
-            }
-            break;
-        case "call-service": {
-            if (!actionConfig.service) {
-                return;
-            }
-            const [domain, service] = actionConfig.service.split(".", 2);
-            hass.callService(domain, service, actionConfig.service_data);
-            if (actionConfig.haptic)
-                forwardHaptic(node, actionConfig.haptic);
-        }
-    }
-};
-
 // See https://github.com/home-assistant/home-assistant-polymer/pull/2457
 // on how to undo mwc -> paper migration
 // import "@material/mwc-ripple";
@@ -2678,6 +2517,8 @@ const longPress = directive(() => (part) => {
     longPressBind(part.committer.element);
 });
 
+var o=["closed","locked","off"],p=function(e,t,a,i){i=i||{},a=null==a?{}:a;var n=new Event(t,{bubbles:void 0===i.bubbles||i.bubbles,cancelable:Boolean(i.cancelable),composed:void 0===i.composed||i.composed});return n.detail=a,e.dispatchEvent(n),n},h=function(e,t,a){void 0===a&&(a=!1),a?history.replaceState(null,"",t):history.pushState(null,"",t),p(window,"location-changed",{replace:a});},v=function(e,t,a){void 0===a&&(a=!0);var i,n=function(e){return e.substr(0,e.indexOf("."))}(t),c="group"===n?"homeassistant":n;switch(n){case"lock":i=a?"unlock":"lock";break;case"cover":i=a?"open_cover":"close_cover";break;default:i=a?"turn_on":"turn_off";}return e.callService(c,i,{entity_id:t})},_=function(e,t){var a=o.includes(e.states[t].state);return v(e,t,a)},d=function(e,t){p(e,"haptic",t);},b=function(e,t,a,i){var n;switch(i&&a.hold_action?n=a.hold_action:!i&&a.tap_action&&(n=a.tap_action),n||(n={action:"more-info"}),n.action){case"more-info":a.entity&&(p(e,"hass-more-info",{entityId:a.entity}),n.haptic&&d(e,n.haptic));break;case"navigate":n.navigation_path&&(h(0,n.navigation_path),n.haptic&&d(e,n.haptic));break;case"url":n.url&&window.open(n.url),n.haptic&&d(e,n.haptic);break;case"toggle":a.entity&&(_(t,a.entity),n.haptic&&d(e,n.haptic));break;case"call-service":if(!n.service)return;var c=n.service.split(".",2);t.callService(c[0],c[1],n.service_data),n.haptic&&d(e,n.haptic);}};
+
 let RadialMenu = class RadialMenu extends LitElement {
     setConfig(config) {
         if (!config || !config.items) {
@@ -2803,7 +2644,7 @@ let RadialMenu = class RadialMenu extends LitElement {
             this._toggleMenu();
         }
         else {
-            handleClick(this, this.hass, config, false);
+            b(this, this.hass, config, false);
             if (this._config.default_dismiss) {
                 this._toggleMenu();
             }
@@ -2817,7 +2658,7 @@ let RadialMenu = class RadialMenu extends LitElement {
             this._toggleMenu();
         }
         else {
-            handleClick(this, this.hass, config, true);
+            b(this, this.hass, config, true);
             if (this._config.default_dismiss) {
                 this._toggleMenu();
             }

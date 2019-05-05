@@ -191,69 +191,6 @@
     lodash "^4.17.11"
     to-fast-properties "^2.0.0"
 
-"@material/animation@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@material/animation/-/animation-1.0.0.tgz#dfd8575c8b031203917dc838ac0e3c0fe0f6709b"
-  integrity sha512-Ed5/vggn6ZhSJ87yn3ZS1d826VJNFz73jHF2bSsgRtHDoB8KCuOwQMfdgAgDa4lKDF6CDIPCKBZPKrs2ubehdw==
-  dependencies:
-    tslib "^1.9.3"
-
-"@material/base@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@material/base/-/base-1.0.0.tgz#e4ef0b22c54aa887af94f5988fb1c0cb3245beba"
-  integrity sha512-5dxFp46x5FA+Epg6YHLzN+5zRt9S2wR84UdvVAEJ1egea94m9UHUg7y9tAnNSN16aexRSywmzyLwPr+i8PGEYA==
-  dependencies:
-    tslib "^1.9.3"
-
-"@material/dom@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@material/dom/-/dom-1.1.0.tgz#3bd3d1a3415b4181118fecb182d93beda56a6f8c"
-  integrity sha512-+HWW38ZaM2UBPu4+7QCusLDSf4tFT31rsEXHkTkxYSg/QpDivfPx6YDz4OmYtafmhPR1d1YjqB3MYysUHdodyw==
-  dependencies:
-    tslib "^1.9.3"
-
-"@material/feature-targeting@^0.44.1":
-  version "0.44.1"
-  resolved "https://registry.yarnpkg.com/@material/feature-targeting/-/feature-targeting-0.44.1.tgz#afafc80294e5efab94bee31a187273d43d34979a"
-  integrity sha512-90cc7njn4aHbH9UxY8qgZth1W5JgOgcEdWdubH1t7sFkwqFxS5g3zgxSBt46TygFBVIXNZNq35Xmg80wgqO7Pg==
-
-"@material/mwc-base@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@material/mwc-base/-/mwc-base-0.5.0.tgz#21f9f237acea444b07a0fb1dfd45d30ef8f62374"
-  integrity sha512-G0n5LCmeXs9QR/ptHgUmV043wUVN2Uq1CWxUeGisGEPCI5e/mt9ISk5/7MubO25yF9muQeQXxXdRt/kFc7xGCg==
-  dependencies:
-    "@material/base" "^1.0.0"
-    lit-element "^2.0.1"
-    lit-html "^1.0.0"
-
-"@material/mwc-ripple@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@material/mwc-ripple/-/mwc-ripple-0.5.0.tgz#6520971df2ff067ef52121c3cc0c4d8960d61977"
-  integrity sha512-vOB9ZpbBKnNsE+d4GoZIUoupk2am5kHBHqGkwSXXTt4c01SO0HRWkdNxayB2QAHgN56Xnsct0z0/pdfoZz7lKA==
-  dependencies:
-    "@material/mwc-base" "^0.5.0"
-    "@material/ripple" "^1.0.0"
-    lit-html "^1.0.0"
-
-"@material/ripple@^1.0.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@material/ripple/-/ripple-1.1.0.tgz#236016fb30c8366faf143297df2c38166d84ffbc"
-  integrity sha512-mkfDBZAmxjpRG7V9TrfOmLxt1g/wvGHCXtYPgvH7W8ozjf53edqxLOFENEdvHbie27y9nyixzXn0gzU0HnxSeA==
-  dependencies:
-    "@material/animation" "^1.0.0"
-    "@material/base" "^1.0.0"
-    "@material/dom" "^1.1.0"
-    "@material/feature-targeting" "^0.44.1"
-    "@material/theme" "^1.1.0"
-    tslib "^1.9.3"
-
-"@material/theme@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@material/theme/-/theme-1.1.0.tgz#9c95dd804168c23c30589fcf09ecc5af5b3d1adc"
-  integrity sha512-YYUV9Rhbx4r/EMb/zoOYJUWjhXChNaLlH1rqt3vpNVyxRcxGqoVMGp5u1XALBCFiD9dACPKLIkKyRYa928nmPQ==
-  dependencies:
-    "@material/feature-targeting" "^0.44.1"
-
 "@types/estree@0.0.39":
   version "0.0.39"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
@@ -573,6 +510,14 @@ cross-spawn@^6.0.5:
     semver "^5.5.0"
     shebang-command "^1.2.0"
     which "^1.2.9"
+
+custom-card-helpers@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/custom-card-helpers/-/custom-card-helpers-1.0.5.tgz#09b953387625de598db4e171b5d641394ba61bbc"
+  integrity sha512-jLnzy0xNXdfT8E49WIKUksS97dtlCjCgUg0/eX5TjgsKuDAEVO8B4f1K/bE+StbZgC32J/c5M5Lune8g6T4jFA==
+  dependencies:
+    home-assistant-js-websocket "^3.4.0"
+    superstruct "^0.6.0"
 
 debug@^2.2.0, debug@^2.3.3, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
@@ -1482,7 +1427,7 @@ levn@^0.3.0, levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lit-element@^2.0.1, lit-element@^2.1.0:
+lit-element@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/lit-element/-/lit-element-2.1.0.tgz#85bc3f1da0227f4b13de8a1be978229b9fa327e9"
   integrity sha512-0z/KHm1xZweivfOVRr8AKR06+D3k02u15m9s4jkuRdnGe5wfmEwePzrQQBsSZNILdnfJvfo3TJOeGhBCVZaPbw==
@@ -2373,7 +2318,7 @@ trim-right@^1.0.1:
   resolved "https://registry.yarnpkg.com/trim-right/-/trim-right-1.0.1.tgz#cb2e1203067e0c8de1f614094b9fe45704ea6003"
   integrity sha1-yy4SAwZ+DI3h9hQJS5/kVwTqYAM=
 
-tslib@1.9.3, tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
+tslib@1.9.3, tslib@^1.8.1, tslib@^1.9.0:
   version "1.9.3"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.9.3.tgz#d7e4dd79245d85428c4d7e4822a79917954ca286"
   integrity sha512-4krF8scpejhaOgqzBEcGM7yDIEfi0/8+8zDRZhNZZ2kjmHJ4hv3zCbQWxoJGz1iw5U0Jl0nma13xzHXcncMavQ==
