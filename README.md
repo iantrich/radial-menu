@@ -88,7 +88,7 @@ type: 'custom:radial-menu'
 icon: 'mdi:home'
 name: 'Home'
 default_open: true
-dismiss_default: false
+default_dismiss: false
 hold_action:
   action: url
   url: https://www.home-assistant.io
