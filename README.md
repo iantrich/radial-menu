@@ -1,4 +1,4 @@
-# ⭕ Lovelace Radial Menu Element
+# ⭕ Lovelace Radial Menu Element by [@iantrich](https://www.github.com/iantrich)
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
