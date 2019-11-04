@@ -2730,7 +2730,7 @@ fecha.parse = function (dateStr, format, i18nSettings) {
 
 var a=function(){try{(new Date).toLocaleDateString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleDateString(t,{year:"numeric",month:"long",day:"numeric"})}:function(t){return fecha.format(t,"mediumDate")},n=function(){try{(new Date).toLocaleString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleString(t,{year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit"})}:function(t){return fecha.format(t,"haDateTime")},r=function(){try{(new Date).toLocaleTimeString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleTimeString(t,{hour:"numeric",minute:"2-digit"})}:function(t){return fecha.format(t,"shortTime")};function f(e){return e.substr(0,e.indexOf("."))}var E=["closed","locked","off"],A=function(e,t,a,n){n=n||{},a=null==a?{}:a;var r=new Event(t,{bubbles:void 0===n.bubbles||n.bubbles,cancelable:Boolean(n.cancelable),composed:void 0===n.composed||n.composed});return r.detail=a,e.dispatchEvent(r),r},C=new Set(["call-service","divider","section","weblink","cast","select"]),L={alert:"toggle",automation:"toggle",climate:"climate",cover:"cover",fan:"toggle",group:"group",input_boolean:"toggle",input_number:"input-number",input_select:"input-select",input_text:"input-text",light:"toggle",lock:"lock",media_player:"media-player",remote:"toggle",scene:"scene",script:"script",sensor:"sensor",timer:"timer",switch:"toggle",vacuum:"toggle",water_heater:"climate",input_datetime:"input-datetime"},O=function(e,t){void 0===t&&(t=!1);var a=function(e,t){return n("hui-error-card",{type:"error",error:e,config:t})},n=function(e,t){var n=window.document.createElement(e);try{n.setConfig(t);}catch(n){return console.error(e,n),a(n.message,t)}return n};if(!e||"object"!=typeof e||!t&&!e.type)return a("No type defined",e);var r=e.type;if(r&&r.startsWith("custom:"))r=r.substr("custom:".length);else if(t)if(C.has(r))r="hui-"+r+"-row";else{if(!e.entity)return a("Invalid config given.",e);var i=e.entity.split(".",1)[0];r="hui-"+(L[i]||"text")+"-entity-row";}else r="hui-"+r+"-card";if(customElements.get(r))return n(r,e);var o=a("Custom element doesn't exist: "+e.type+".",e);o.style.display="None";var s=setTimeout(function(){o.style.display="";},2e3);return customElements.whenDefined(e.type).then(function(){clearTimeout(s),A(o,"ll-rebuild",{},o);}),o};var F=function(e){A(window,"haptic",e);},B=function(e,t,a){void 0===a&&(a=!1),a?history.replaceState(null,"",t):history.pushState(null,"",t),A(window,"location-changed",{replace:a});},U=function(e,t,a){void 0===a&&(a=!0);var n,r=f(t),i="group"===r?"homeassistant":r;switch(r){case"lock":n=a?"unlock":"lock";break;case"cover":n=a?"open_cover":"close_cover";break;default:n=a?"turn_on":"turn_off";}return e.callService(i,n,{entity_id:t})},V=function(e,t){var a=E.includes(e.states[t].state);return U(e,t,a)},W=function(e,t,a,n){var r;if("double_tap"===n&&a.double_tap_action?r=a.double_tap_action:"hold"===n&&a.hold_action?r=a.hold_action:"tap"===n&&a.tap_action&&(r=a.tap_action),r||(r={action:"more-info"}),!r.confirmation||r.confirmation.exemptions&&r.confirmation.exemptions.some(function(e){return e.user===t.user.id})||(F("warning"),confirm(r.confirmation.text||"Are you sure you want to "+r.action+"?")))switch(r.action){case"more-info":(a.entity||a.camera_image)&&A(e,"hass-more-info",{entityId:a.entity?a.entity:a.camera_image});break;case"navigate":r.navigation_path&&B(0,r.navigation_path);break;case"url":r.url_path&&window.open(r.url_path);break;case"toggle":a.entity&&(V(t,a.entity),F("success"));break;case"call-service":if(!r.service)return void F("failure");var i=r.service.split(".",2);t.callService(i[0],i[1],r.service_data),F("success");}};function G(e){return void 0!==e&&"none"!==e.action}
 
-const CARD_VERSION = '1.4.4';
+const CARD_VERSION = '1.4.5';
 
 const isTouch = "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
@@ -2963,7 +2963,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                     hasHold: G(item.hold_action),
-                    hasDoubleTap: G(item.double_tap_action),
+                    hasDoubleTap: G(item.double_tap_action)
                 })}
                     .config=${item}
                     .stateObj=${{
@@ -2984,7 +2984,7 @@ let RadialMenu = class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                         hasHold: G(item.hold_action),
-                        hasDoubleTap: G(item.double_tap_action),
+                        hasDoubleTap: G(item.double_tap_action)
                     })}
                     .config=${item}
                     .icon=${item.icon}
@@ -3000,10 +3000,11 @@ let RadialMenu = class RadialMenu extends LitElement {
             ? html `
               <state-badge
                 class="menu-button"
+                .menu=${true}
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                 hasHold: G(this._config.hold_action),
-                hasDoubleTap: G(this._config.double_tap_action),
+                hasDoubleTap: G(this._config.double_tap_action)
             })}
                 .config=${this._config}
                 .stateObj=${{
@@ -3017,10 +3018,11 @@ let RadialMenu = class RadialMenu extends LitElement {
             : html `
               <ha-icon
                 class="menu-button"
+                .menu=${true}
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                 hasHold: G(this._config.hold_action),
-                hasDoubleTap: G(this._config.double_tap_action),
+                hasDoubleTap: G(this._config.double_tap_action)
             })}
                 .icon=${this._config.icon}
                 .title=${this._config.name}
@@ -3040,14 +3042,22 @@ let RadialMenu = class RadialMenu extends LitElement {
     }
     _handleAction(ev) {
         const config = ev.target.config;
+        console.log(config);
         if (config &&
-            config.tap_action &&
-            config.tap_action.action === "toggle-menu") {
+            ((ev.detail.action === "tap" &&
+                config.tap_action &&
+                config.tap_action.action === "toggle-menu") ||
+                (ev.detail.action === "hold" &&
+                    config.hold_action &&
+                    config.hold_action.action === "toggle-menu") ||
+                (ev.detail.action === "double_tap" &&
+                    config.double_tap_action &&
+                    config.double_tap_action.action === "toggle-menu"))) {
             this._toggleMenu();
         }
         else {
             W(this, this.hass, config, ev.detail.action);
-            if (this._config.default_dismiss) {
+            if (this._config.default_dismiss && !ev.target.menu) {
                 this._toggleMenu();
             }
         }

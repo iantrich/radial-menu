@@ -107,7 +107,7 @@ class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action),
+                      hasDoubleTap: hasAction(item.double_tap_action)
                     })}
                     .config=${item}
                     .stateObj=${{
@@ -128,7 +128,7 @@ class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action),
+                      hasDoubleTap: hasAction(item.double_tap_action)
                     })}
                     .config=${item}
                     .icon=${item.icon}
@@ -144,10 +144,11 @@ class RadialMenu extends LitElement {
           ? html`
               <state-badge
                 class="menu-button"
+                .menu=${true}
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                  hasDoubleTap: hasAction(this._config.double_tap_action)
                 })}
                 .config=${this._config}
                 .stateObj=${{
@@ -161,10 +162,11 @@ class RadialMenu extends LitElement {
           : html`
               <ha-icon
                 class="menu-button"
+                .menu=${true}
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                  hasDoubleTap: hasAction(this._config.double_tap_action)
                 })}
                 .icon=${this._config.icon}
                 .title=${this._config.name}
@@ -187,15 +189,24 @@ class RadialMenu extends LitElement {
 
   private _handleAction(ev): void {
     const config = ev.target.config;
+    console.log(config);
+
     if (
       config &&
-      config.tap_action &&
-      config.tap_action.action === "toggle-menu"
+      ((ev.detail.action! === "tap" &&
+        config.tap_action &&
+        config.tap_action.action === "toggle-menu") ||
+        (ev.detail.action! === "hold" &&
+          config.hold_action &&
+          config.hold_action.action === "toggle-menu") ||
+        (ev.detail.action! === "double_tap" &&
+          config.double_tap_action &&
+          config.double_tap_action.action === "toggle-menu"))
     ) {
       this._toggleMenu();
     } else {
       handleAction(this, this.hass!, config, ev.detail.action!);
-      if (this._config!.default_dismiss) {
+      if (this._config!.default_dismiss && !ev.target.menu) {
         this._toggleMenu();
       }
     }
