@@ -1430,6 +1430,7 @@ const render$1 = (result, container, options) => {
  * subject to an additional IP rights grant found at
  * http://polymer.github.io/PATENTS.txt
  */
+var _a;
 /**
  * When using Closure Compiler, JSCompiler_renameProperty(property, object) is
  * replaced at compile time by the munged name for object[property]. We cannot
@@ -1485,6 +1486,13 @@ const STATE_UPDATE_REQUESTED = 1 << 2;
 const STATE_IS_REFLECTING_TO_ATTRIBUTE = 1 << 3;
 const STATE_IS_REFLECTING_TO_PROPERTY = 1 << 4;
 const STATE_HAS_CONNECTED = 1 << 5;
+/**
+ * The Closure JS Compiler doesn't currently have good support for static
+ * property semantics where "this" is dynamic (e.g.
+ * https://github.com/google/closure-compiler/issues/3177 and others) so we use
+ * this hack to bypass any rewriting by the compiler.
+ */
+const finalized = 'finalized';
 /**
  * Base element class which manages element properties and attributes. When
  * properties change, the `update` method is asynchronously called. This method
@@ -1572,9 +1580,7 @@ class UpdatingElement extends HTMLElement {
                 return this[key];
             },
             set(value) {
-                // tslint:disable-next-line:no-any no symbol in index
                 const oldValue = this[name];
-                // tslint:disable-next-line:no-any no symbol in index
                 this[key] = value;
                 this._requestUpdate(name, oldValue);
             },
@@ -1588,16 +1594,12 @@ class UpdatingElement extends HTMLElement {
      * @nocollapse
      */
     static finalize() {
-        if (this.hasOwnProperty(JSCompiler_renameProperty('finalized', this)) &&
-            this.finalized) {
-            return;
-        }
         // finalize any superclasses
         const superCtor = Object.getPrototypeOf(this);
-        if (typeof superCtor.finalize === 'function') {
+        if (!superCtor.hasOwnProperty(finalized)) {
             superCtor.finalize();
         }
-        this.finalized = true;
+        this[finalized] = true;
         this._ensureClassProperties();
         // initialize Map populated in observedAttributes
         this._attributeToPropertyMap = new Map();
@@ -1680,7 +1682,8 @@ class UpdatingElement extends HTMLElement {
      */
     initialize() {
         this._saveInstanceProperties();
-        // ensures first update will be caught by an early access of `updateComplete`
+        // ensures first update will be caught by an early access of
+        // `updateComplete`
         this._requestUpdate();
     }
     /**
@@ -1722,10 +1725,10 @@ class UpdatingElement extends HTMLElement {
     }
     connectedCallback() {
         this._updateState = this._updateState | STATE_HAS_CONNECTED;
-        // Ensure first connection completes an update. Updates cannot complete before
-        // connection and if one is pending connection the `_hasConnectionResolver`
-        // will exist. If so, resolve it to complete the update, otherwise
-        // requestUpdate.
+        // Ensure first connection completes an update. Updates cannot complete
+        // before connection and if one is pending connection the
+        // `_hasConnectionResolver` will exist. If so, resolve it to complete the
+        // update, otherwise requestUpdate.
         if (this._hasConnectedResolver) {
             this._hasConnectedResolver();
             this._hasConnectedResolver = undefined;
@@ -1951,15 +1954,36 @@ class UpdatingElement extends HTMLElement {
      * The Promise value is a boolean that is `true` if the element completed the
      * update without triggering another update. The Promise result is `false` if
      * a property was set inside `updated()`. If the Promise is rejected, an
-     * exception was thrown during the update. This getter can be implemented to
-     * await additional state. For example, it is sometimes useful to await a
-     * rendered element before fulfilling this Promise. To do this, first await
-     * `super.updateComplete` then any subsequent state.
+     * exception was thrown during the update.
+     *
+     * To await additional asynchronous work, override the `_getUpdateComplete`
+     * method. For example, it is sometimes useful to await a rendered element
+     * before fulfilling this Promise. To do this, first await
+     * `super._getUpdateComplete()`, then any subsequent state.
      *
      * @returns {Promise} The Promise returns a boolean that indicates if the
      * update resolved without triggering another update.
      */
     get updateComplete() {
+        return this._getUpdateComplete();
+    }
+    /**
+     * Override point for the `updateComplete` promise.
+     *
+     * It is not safe to override the `updateComplete` getter directly due to a
+     * limitation in TypeScript which means it is not possible to call a
+     * superclass getter (e.g. `super.updateComplete.then(...)`) when the target
+     * language is ES5 (https://github.com/microsoft/TypeScript/issues/338).
+     * This method should be overridden instead. For example:
+     *
+     *   class MyElement extends LitElement {
+     *     async _getUpdateComplete() {
+     *       await super._getUpdateComplete();
+     *       await this._myChild.updateComplete;
+     *     }
+     *   }
+     */
+    _getUpdateComplete() {
         return this._updatePromise;
     }
     /**
@@ -2012,10 +2036,11 @@ class UpdatingElement extends HTMLElement {
     firstUpdated(_changedProperties) {
     }
 }
+_a = finalized;
 /**
  * Marks class as having finished creating properties.
  */
-UpdatingElement.finalized = true;
+UpdatingElement[_a] = true;
 
 /**
  * @license
@@ -2087,7 +2112,6 @@ const standardProperty = (options, element) => {
             //     initializer: descriptor.initializer,
             //   }
             // ],
-            // tslint:disable-next-line:no-any decorator
             initializer() {
                 if (typeof element.initializer === 'function') {
                     this[element.key] = element.initializer.call(this);
@@ -2161,6 +2185,9 @@ const textFromCSSResult = (value) => {
     if (value instanceof CSSResult) {
         return value.cssText;
     }
+    else if (typeof value === 'number') {
+        return value;
+    }
     else {
         throw new Error(`Value passed to 'css' function must be a 'css' function result: ${value}. Use 'unsafeCSS' to pass non-literal values, but
             take care to ensure page security.`);
@@ -2194,7 +2221,7 @@ const css = (strings, ...values) => {
 // This line will be used in regexes to search for LitElement usage.
 // TODO(justinfagnani): inject version number at build time
 (window['litElementVersions'] || (window['litElementVersions'] = []))
-    .push('2.0.1');
+    .push('2.2.1');
 /**
  * Minimal implementation of Array.prototype.flat
  * @param arr the array to flatten
@@ -2217,7 +2244,9 @@ const flattenStyles = (styles) => styles.flat ? styles.flat(Infinity) : arrayFla
 class LitElement extends UpdatingElement {
     /** @nocollapse */
     static finalize() {
-        super.finalize();
+        // The Closure JS Compiler does not always preserve the correct "this"
+        // when calling static super methods (b/137460243), so explicitly bind.
+        super.finalize.call(this);
         // Prepare styling that is stamped at first render time. Styling
         // is built from user provided `styles` or is inherited from the superclass.
         this._styles =
@@ -2357,8 +2386,11 @@ class LitElement extends UpdatingElement {
 /**
  * Ensure this class is marked as `finalized` as an optimization ensuring
  * it will not needlessly try to `finalize`.
+ *
+ * Note this property name is a string to prevent breaking Closure JS Compiler
+ * optimizations. See updating-element.ts for more information.
  */
-LitElement.finalized = true;
+LitElement['finalized'] = true;
 /**
  * Render method used to render the lit-html TemplateResult to the element's
  * DOM.
@@ -2369,16 +2401,529 @@ LitElement.finalized = true;
  */
 LitElement.render = render$1;
 
-var c=["closed","locked","off"],d=function(t,e,o,n){n=n||{},o=null==o?{}:o;var i=new Event(e,{bubbles:void 0===n.bubbles||n.bubbles,cancelable:Boolean(n.cancelable),composed:void 0===n.composed||n.composed});return i.detail=o,t.dispatchEvent(i),i},h=function(t,e,o){void 0===o&&(o=!1),o?history.replaceState(null,"",e):history.pushState(null,"",e),d(window,"location-changed",{replace:o});},m=function(t,e,o){void 0===o&&(o=!0);var n,i=function(t){return t.substr(0,t.indexOf("."))}(e),a="group"===i?"homeassistant":i;switch(i){case"lock":n=o?"unlock":"lock";break;case"cover":n=o?"open_cover":"close_cover";break;default:n=o?"turn_on":"turn_off";}return t.callService(a,n,{entity_id:e})},v=function(t,e){var o=c.includes(t.states[e].state);return m(t,e,o)},f=function(t,e){d(t,"haptic",e);},w=function(t,e,o,n){var i;switch(n&&o.hold_action?i=o.hold_action:!n&&o.tap_action&&(i=o.tap_action),i||(i={action:"more-info"}),i.action){case"more-info":o.entity&&(d(t,"hass-more-info",{entityId:o.entity}),i.haptic&&f(t,i.haptic));break;case"navigate":i.navigation_path&&(h(0,i.navigation_path),i.haptic&&f(t,i.haptic));break;case"url":i.url&&window.open(i.url),i.haptic&&f(t,i.haptic);break;case"toggle":o.entity&&(v(e,o.entity),i.haptic&&f(t,i.haptic));break;case"call-service":if(!i.service)return;var a=i.service.split(".",2);e.callService(a[0],a[1],i.service_data),i.haptic&&f(t,i.haptic);}},g="ontouchstart"in window||navigator.maxTouchPoints>0||navigator.msMaxTouchPoints>0,b=function(t){function e(){t.call(this),this.holdTime=500,this.ripple=document.createElement("paper-ripple"),this.timer=void 0,this.held=!1,this.cooldownStart=!1,this.cooldownEnd=!1;}return t&&(e.__proto__=t),(e.prototype=Object.create(t&&t.prototype)).constructor=e,e.prototype.connectedCallback=function(){var t=this;Object.assign(this.style,{borderRadius:"50%",position:"absolute",width:g?"100px":"50px",height:g?"100px":"50px",transform:"translate(-50%, -50%)",pointerEvents:"none"}),this.appendChild(this.ripple),this.ripple.style.color="#03a9f4",this.ripple.style.color="var(--primary-color)",["touchcancel","mouseout","mouseup","touchmove","mousewheel","wheel","scroll"].forEach(function(e){document.addEventListener(e,function(){clearTimeout(t.timer),t.stopAnimation(),t.timer=void 0;},{passive:!0});});},e.prototype.bind=function(t){var e=this;if(!t.longPress){t.longPress=!0,t.addEventListener("contextmenu",function(t){var e=t||window.event;return e.preventDefault&&e.preventDefault(),e.stopPropagation&&e.stopPropagation(),e.cancelBubble=!0,e.returnValue=!1,!1});var o=function(t){var o,n;e.cooldownStart||(e.held=!1,t.touches?(o=t.touches[0].pageX,n=t.touches[0].pageY):(o=t.pageX,n=t.pageY),e.timer=window.setTimeout(function(){e.startAnimation(o,n),e.held=!0;},e.holdTime),e.cooldownStart=!0,window.setTimeout(function(){return e.cooldownStart=!1},100));},n=function(o){e.cooldownEnd||["touchend","touchcancel"].includes(o.type)&&void 0===e.timer||(clearTimeout(e.timer),e.stopAnimation(),e.timer=void 0,t.dispatchEvent(e.held?new Event("ha-hold"):new Event("ha-click")),e.cooldownEnd=!0,window.setTimeout(function(){return e.cooldownEnd=!1},100));};t.addEventListener("touchstart",o,{passive:!0}),t.addEventListener("touchend",n),t.addEventListener("touchcancel",n),t.addEventListener("mousedown",o,{passive:!0}),t.addEventListener("click",n);}},e.prototype.startAnimation=function(t,e){Object.assign(this.style,{left:t+"px",top:e+"px",display:null}),this.ripple.holdDown=!0,this.ripple.simulatedRipple();},e.prototype.stopAnimation=function(){this.ripple.holdDown=!1,this.style.display="none";},e}(HTMLElement);customElements.get("long-press")||customElements.define("long-press",b);var _=function(t){var e=function(){var t=document.body;if(t.querySelector("long-press"))return t.querySelector("long-press");var e=document.createElement("long-press");return t.appendChild(e),e}();e&&e.bind(t);},y=directive(function(){return function(t){_(t.committer.element);}});
+/**
+ * Parse or format dates
+ * @class fecha
+ */
+var fecha = {};
+var token = /d{1,4}|M{1,4}|YY(?:YY)?|S{1,3}|Do|ZZ|([HhMsDm])\1?|[aA]|"[^"]*"|'[^']*'/g;
+var twoDigits = '\\d\\d?';
+var threeDigits = '\\d{3}';
+var fourDigits = '\\d{4}';
+var word = '[^\\s]+';
+var literal = /\[([^]*?)\]/gm;
+var noop = function () {
+};
 
+function regexEscape(str) {
+  return str.replace( /[|\\{()[^$+*?.-]/g, '\\$&');
+}
+
+function shorten(arr, sLen) {
+  var newArr = [];
+  for (var i = 0, len = arr.length; i < len; i++) {
+    newArr.push(arr[i].substr(0, sLen));
+  }
+  return newArr;
+}
+
+function monthUpdate(arrName) {
+  return function (d, v, i18n) {
+    var index = i18n[arrName].indexOf(v.charAt(0).toUpperCase() + v.substr(1).toLowerCase());
+    if (~index) {
+      d.month = index;
+    }
+  };
+}
+
+function pad(val, len) {
+  val = String(val);
+  len = len || 2;
+  while (val.length < len) {
+    val = '0' + val;
+  }
+  return val;
+}
+
+var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+var monthNamesShort = shorten(monthNames, 3);
+var dayNamesShort = shorten(dayNames, 3);
+fecha.i18n = {
+  dayNamesShort: dayNamesShort,
+  dayNames: dayNames,
+  monthNamesShort: monthNamesShort,
+  monthNames: monthNames,
+  amPm: ['am', 'pm'],
+  DoFn: function DoFn(D) {
+    return D + ['th', 'st', 'nd', 'rd'][D % 10 > 3 ? 0 : (D - D % 10 !== 10) * D % 10];
+  }
+};
+
+var formatFlags = {
+  D: function(dateObj) {
+    return dateObj.getDate();
+  },
+  DD: function(dateObj) {
+    return pad(dateObj.getDate());
+  },
+  Do: function(dateObj, i18n) {
+    return i18n.DoFn(dateObj.getDate());
+  },
+  d: function(dateObj) {
+    return dateObj.getDay();
+  },
+  dd: function(dateObj) {
+    return pad(dateObj.getDay());
+  },
+  ddd: function(dateObj, i18n) {
+    return i18n.dayNamesShort[dateObj.getDay()];
+  },
+  dddd: function(dateObj, i18n) {
+    return i18n.dayNames[dateObj.getDay()];
+  },
+  M: function(dateObj) {
+    return dateObj.getMonth() + 1;
+  },
+  MM: function(dateObj) {
+    return pad(dateObj.getMonth() + 1);
+  },
+  MMM: function(dateObj, i18n) {
+    return i18n.monthNamesShort[dateObj.getMonth()];
+  },
+  MMMM: function(dateObj, i18n) {
+    return i18n.monthNames[dateObj.getMonth()];
+  },
+  YY: function(dateObj) {
+    return pad(String(dateObj.getFullYear()), 4).substr(2);
+  },
+  YYYY: function(dateObj) {
+    return pad(dateObj.getFullYear(), 4);
+  },
+  h: function(dateObj) {
+    return dateObj.getHours() % 12 || 12;
+  },
+  hh: function(dateObj) {
+    return pad(dateObj.getHours() % 12 || 12);
+  },
+  H: function(dateObj) {
+    return dateObj.getHours();
+  },
+  HH: function(dateObj) {
+    return pad(dateObj.getHours());
+  },
+  m: function(dateObj) {
+    return dateObj.getMinutes();
+  },
+  mm: function(dateObj) {
+    return pad(dateObj.getMinutes());
+  },
+  s: function(dateObj) {
+    return dateObj.getSeconds();
+  },
+  ss: function(dateObj) {
+    return pad(dateObj.getSeconds());
+  },
+  S: function(dateObj) {
+    return Math.round(dateObj.getMilliseconds() / 100);
+  },
+  SS: function(dateObj) {
+    return pad(Math.round(dateObj.getMilliseconds() / 10), 2);
+  },
+  SSS: function(dateObj) {
+    return pad(dateObj.getMilliseconds(), 3);
+  },
+  a: function(dateObj, i18n) {
+    return dateObj.getHours() < 12 ? i18n.amPm[0] : i18n.amPm[1];
+  },
+  A: function(dateObj, i18n) {
+    return dateObj.getHours() < 12 ? i18n.amPm[0].toUpperCase() : i18n.amPm[1].toUpperCase();
+  },
+  ZZ: function(dateObj) {
+    var o = dateObj.getTimezoneOffset();
+    return (o > 0 ? '-' : '+') + pad(Math.floor(Math.abs(o) / 60) * 100 + Math.abs(o) % 60, 4);
+  }
+};
+
+var parseFlags = {
+  D: [twoDigits, function (d, v) {
+    d.day = v;
+  }],
+  Do: [twoDigits + word, function (d, v) {
+    d.day = parseInt(v, 10);
+  }],
+  M: [twoDigits, function (d, v) {
+    d.month = v - 1;
+  }],
+  YY: [twoDigits, function (d, v) {
+    var da = new Date(), cent = +('' + da.getFullYear()).substr(0, 2);
+    d.year = '' + (v > 68 ? cent - 1 : cent) + v;
+  }],
+  h: [twoDigits, function (d, v) {
+    d.hour = v;
+  }],
+  m: [twoDigits, function (d, v) {
+    d.minute = v;
+  }],
+  s: [twoDigits, function (d, v) {
+    d.second = v;
+  }],
+  YYYY: [fourDigits, function (d, v) {
+    d.year = v;
+  }],
+  S: ['\\d', function (d, v) {
+    d.millisecond = v * 100;
+  }],
+  SS: ['\\d{2}', function (d, v) {
+    d.millisecond = v * 10;
+  }],
+  SSS: [threeDigits, function (d, v) {
+    d.millisecond = v;
+  }],
+  d: [twoDigits, noop],
+  ddd: [word, noop],
+  MMM: [word, monthUpdate('monthNamesShort')],
+  MMMM: [word, monthUpdate('monthNames')],
+  a: [word, function (d, v, i18n) {
+    var val = v.toLowerCase();
+    if (val === i18n.amPm[0]) {
+      d.isPm = false;
+    } else if (val === i18n.amPm[1]) {
+      d.isPm = true;
+    }
+  }],
+  ZZ: ['[^\\s]*?[\\+\\-]\\d\\d:?\\d\\d|[^\\s]*?Z', function (d, v) {
+    var parts = (v + '').match(/([+-]|\d\d)/gi), minutes;
+
+    if (parts) {
+      minutes = +(parts[1] * 60) + parseInt(parts[2], 10);
+      d.timezoneOffset = parts[0] === '+' ? minutes : -minutes;
+    }
+  }]
+};
+parseFlags.dd = parseFlags.d;
+parseFlags.dddd = parseFlags.ddd;
+parseFlags.DD = parseFlags.D;
+parseFlags.mm = parseFlags.m;
+parseFlags.hh = parseFlags.H = parseFlags.HH = parseFlags.h;
+parseFlags.MM = parseFlags.M;
+parseFlags.ss = parseFlags.s;
+parseFlags.A = parseFlags.a;
+
+
+// Some common format strings
+fecha.masks = {
+  default: 'ddd MMM DD YYYY HH:mm:ss',
+  shortDate: 'M/D/YY',
+  mediumDate: 'MMM D, YYYY',
+  longDate: 'MMMM D, YYYY',
+  fullDate: 'dddd, MMMM D, YYYY',
+  shortTime: 'HH:mm',
+  mediumTime: 'HH:mm:ss',
+  longTime: 'HH:mm:ss.SSS'
+};
+
+/***
+ * Format a date
+ * @method format
+ * @param {Date|number} dateObj
+ * @param {string} mask Format of the date, i.e. 'mm-dd-yy' or 'shortDate'
+ */
+fecha.format = function (dateObj, mask, i18nSettings) {
+  var i18n = i18nSettings || fecha.i18n;
+
+  if (typeof dateObj === 'number') {
+    dateObj = new Date(dateObj);
+  }
+
+  if (Object.prototype.toString.call(dateObj) !== '[object Date]' || isNaN(dateObj.getTime())) {
+    throw new Error('Invalid Date in fecha.format');
+  }
+
+  mask = fecha.masks[mask] || mask || fecha.masks['default'];
+
+  var literals = [];
+
+  // Make literals inactive by replacing them with ??
+  mask = mask.replace(literal, function($0, $1) {
+    literals.push($1);
+    return '@@@';
+  });
+  // Apply formatting rules
+  mask = mask.replace(token, function ($0) {
+    return $0 in formatFlags ? formatFlags[$0](dateObj, i18n) : $0.slice(1, $0.length - 1);
+  });
+  // Inline literal values back into the formatted value
+  return mask.replace(/@@@/g, function() {
+    return literals.shift();
+  });
+};
+
+/**
+ * Parse a date string into an object, changes - into /
+ * @method parse
+ * @param {string} dateStr Date string
+ * @param {string} format Date parse format
+ * @returns {Date|boolean}
+ */
+fecha.parse = function (dateStr, format, i18nSettings) {
+  var i18n = i18nSettings || fecha.i18n;
+
+  if (typeof format !== 'string') {
+    throw new Error('Invalid format in fecha.parse');
+  }
+
+  format = fecha.masks[format] || format;
+
+  // Avoid regular expression denial of service, fail early for really long strings
+  // https://www.owasp.org/index.php/Regular_expression_Denial_of_Service_-_ReDoS
+  if (dateStr.length > 1000) {
+    return null;
+  }
+
+  var dateInfo = {};
+  var parseInfo = [];
+  var literals = [];
+  format = format.replace(literal, function($0, $1) {
+    literals.push($1);
+    return '@@@';
+  });
+  var newFormat = regexEscape(format).replace(token, function ($0) {
+    if (parseFlags[$0]) {
+      var info = parseFlags[$0];
+      parseInfo.push(info[1]);
+      return '(' + info[0] + ')';
+    }
+
+    return $0;
+  });
+  newFormat = newFormat.replace(/@@@/g, function() {
+    return literals.shift();
+  });
+  var matches = dateStr.match(new RegExp(newFormat, 'i'));
+  if (!matches) {
+    return null;
+  }
+
+  for (var i = 1; i < matches.length; i++) {
+    parseInfo[i - 1](dateInfo, matches[i], i18n);
+  }
+
+  var today = new Date();
+  if (dateInfo.isPm === true && dateInfo.hour != null && +dateInfo.hour !== 12) {
+    dateInfo.hour = +dateInfo.hour + 12;
+  } else if (dateInfo.isPm === false && +dateInfo.hour === 12) {
+    dateInfo.hour = 0;
+  }
+
+  var date;
+  if (dateInfo.timezoneOffset != null) {
+    dateInfo.minute = +(dateInfo.minute || 0) - +dateInfo.timezoneOffset;
+    date = new Date(Date.UTC(dateInfo.year || today.getFullYear(), dateInfo.month || 0, dateInfo.day || 1,
+      dateInfo.hour || 0, dateInfo.minute || 0, dateInfo.second || 0, dateInfo.millisecond || 0));
+  } else {
+    date = new Date(dateInfo.year || today.getFullYear(), dateInfo.month || 0, dateInfo.day || 1,
+      dateInfo.hour || 0, dateInfo.minute || 0, dateInfo.second || 0, dateInfo.millisecond || 0);
+  }
+  return date;
+};
+
+var a=function(){try{(new Date).toLocaleDateString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleDateString(t,{year:"numeric",month:"long",day:"numeric"})}:function(t){return fecha.format(t,"mediumDate")},n=function(){try{(new Date).toLocaleString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleString(t,{year:"numeric",month:"long",day:"numeric",hour:"numeric",minute:"2-digit"})}:function(t){return fecha.format(t,"haDateTime")},r=function(){try{(new Date).toLocaleTimeString("i");}catch(e){return "RangeError"===e.name}return !1}()?function(e,t){return e.toLocaleTimeString(t,{hour:"numeric",minute:"2-digit"})}:function(t){return fecha.format(t,"shortTime")};function f(e){return e.substr(0,e.indexOf("."))}var E=["closed","locked","off"],A=function(e,t,a,n){n=n||{},a=null==a?{}:a;var r=new Event(t,{bubbles:void 0===n.bubbles||n.bubbles,cancelable:Boolean(n.cancelable),composed:void 0===n.composed||n.composed});return r.detail=a,e.dispatchEvent(r),r},C=new Set(["call-service","divider","section","weblink","cast","select"]),L={alert:"toggle",automation:"toggle",climate:"climate",cover:"cover",fan:"toggle",group:"group",input_boolean:"toggle",input_number:"input-number",input_select:"input-select",input_text:"input-text",light:"toggle",lock:"lock",media_player:"media-player",remote:"toggle",scene:"scene",script:"script",sensor:"sensor",timer:"timer",switch:"toggle",vacuum:"toggle",water_heater:"climate",input_datetime:"input-datetime"},O=function(e,t){void 0===t&&(t=!1);var a=function(e,t){return n("hui-error-card",{type:"error",error:e,config:t})},n=function(e,t){var n=window.document.createElement(e);try{n.setConfig(t);}catch(n){return console.error(e,n),a(n.message,t)}return n};if(!e||"object"!=typeof e||!t&&!e.type)return a("No type defined",e);var r=e.type;if(r&&r.startsWith("custom:"))r=r.substr("custom:".length);else if(t)if(C.has(r))r="hui-"+r+"-row";else{if(!e.entity)return a("Invalid config given.",e);var i=e.entity.split(".",1)[0];r="hui-"+(L[i]||"text")+"-entity-row";}else r="hui-"+r+"-card";if(customElements.get(r))return n(r,e);var o=a("Custom element doesn't exist: "+e.type+".",e);o.style.display="None";var s=setTimeout(function(){o.style.display="";},2e3);return customElements.whenDefined(e.type).then(function(){clearTimeout(s),A(o,"ll-rebuild",{},o);}),o};var F=function(e){A(window,"haptic",e);},B=function(e,t,a){void 0===a&&(a=!1),a?history.replaceState(null,"",t):history.pushState(null,"",t),A(window,"location-changed",{replace:a});},U=function(e,t,a){void 0===a&&(a=!0);var n,r=f(t),i="group"===r?"homeassistant":r;switch(r){case"lock":n=a?"unlock":"lock";break;case"cover":n=a?"open_cover":"close_cover";break;default:n=a?"turn_on":"turn_off";}return e.callService(i,n,{entity_id:t})},V=function(e,t){var a=E.includes(e.states[t].state);return U(e,t,a)},W=function(e,t,a,n){var r;if("double_tap"===n&&a.double_tap_action?r=a.double_tap_action:"hold"===n&&a.hold_action?r=a.hold_action:"tap"===n&&a.tap_action&&(r=a.tap_action),r||(r={action:"more-info"}),!r.confirmation||r.confirmation.exemptions&&r.confirmation.exemptions.some(function(e){return e.user===t.user.id})||(F("warning"),confirm(r.confirmation.text||"Are you sure you want to "+r.action+"?")))switch(r.action){case"more-info":(a.entity||a.camera_image)&&A(e,"hass-more-info",{entityId:a.entity?a.entity:a.camera_image});break;case"navigate":r.navigation_path&&B(0,r.navigation_path);break;case"url":r.url_path&&window.open(r.url_path);break;case"toggle":a.entity&&(V(t,a.entity),F("success"));break;case"call-service":if(!r.service)return void F("failure");var i=r.service.split(".",2);t.callService(i[0],i[1],r.service_data),F("success");}};function G(e){return void 0!==e&&"none"!==e.action}
+
+const CARD_VERSION = '1.4.4';
+
+const isTouch = "ontouchstart" in window ||
+    navigator.maxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0;
+class ActionHandler extends HTMLElement {
+    constructor() {
+        super();
+        this.holdTime = 500;
+        this.ripple = document.createElement("mwc-ripple");
+        this.timer = undefined;
+        this.held = false;
+        this.cooldownStart = false;
+        this.cooldownEnd = false;
+    }
+    connectedCallback() {
+        Object.assign(this.style, {
+            position: "absolute",
+            width: isTouch ? "100px" : "50px",
+            height: isTouch ? "100px" : "50px",
+            transform: "translate(-50%, -50%)",
+            pointerEvents: "none",
+        });
+        this.appendChild(this.ripple);
+        this.ripple.primary = true;
+        [
+            "touchcancel",
+            "mouseout",
+            "mouseup",
+            "touchmove",
+            "mousewheel",
+            "wheel",
+            "scroll",
+        ].forEach((ev) => {
+            document.addEventListener(ev, () => {
+                clearTimeout(this.timer);
+                this.stopAnimation();
+                this.timer = undefined;
+            }, { passive: true });
+        });
+    }
+    bind(element, options) {
+        if (element.actionHandler) {
+            return;
+        }
+        element.actionHandler = true;
+        element.addEventListener("contextmenu", (ev) => {
+            const e = ev || window.event;
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            e.cancelBubble = true;
+            e.returnValue = false;
+            return false;
+        });
+        const clickStart = (ev) => {
+            if (this.cooldownStart) {
+                return;
+            }
+            this.held = false;
+            let x;
+            let y;
+            if (ev.touches) {
+                x = ev.touches[0].pageX;
+                y = ev.touches[0].pageY;
+            }
+            else {
+                x = ev.pageX;
+                y = ev.pageY;
+            }
+            if (options.hasHold) {
+                this.timer = window.setTimeout(() => {
+                    this.startAnimation(x, y);
+                    this.held = true;
+                    if (options.repeat && !element.isRepeating) {
+                        element.isRepeating = true;
+                        this.repeatTimeout = setInterval(() => {
+                            A(element, "action", { action: "hold" });
+                        }, options.repeat);
+                    }
+                }, this.holdTime);
+            }
+            this.cooldownStart = true;
+            window.setTimeout(() => (this.cooldownStart = false), 100);
+        };
+        const clickEnd = (ev) => {
+            if (this.cooldownEnd ||
+                (["touchend", "touchcancel"].includes(ev.type) &&
+                    this.timer === undefined)) {
+                if (element.isRepeating && this.repeatTimeout) {
+                    console.log("clear");
+                    clearInterval(this.repeatTimeout);
+                    element.isRepeating = false;
+                }
+                return;
+            }
+            clearTimeout(this.timer);
+            if (element.isRepeating && this.repeatTimeout) {
+                console.log("clear2");
+                clearInterval(this.repeatTimeout);
+            }
+            element.isRepeating = false;
+            this.stopAnimation();
+            this.timer = undefined;
+            if (this.held) {
+                if (!options.repeat) {
+                    A(element, "action", { action: "hold" });
+                }
+            }
+            else if (options.hasDoubleTap) {
+                if (ev.detail === 1) {
+                    this.dblClickTimeout = window.setTimeout(() => {
+                        A(element, "action", { action: "tap" });
+                    }, 250);
+                }
+                else {
+                    clearTimeout(this.dblClickTimeout);
+                    A(element, "action", { action: "double_tap" });
+                }
+            }
+            else {
+                A(element, "action", { action: "tap" });
+            }
+            this.cooldownEnd = true;
+            window.setTimeout(() => (this.cooldownEnd = false), 100);
+        };
+        element.addEventListener("touchstart", clickStart, { passive: true });
+        element.addEventListener("touchend", clickEnd);
+        element.addEventListener("touchcancel", clickEnd);
+        // iOS 13 sends a complete normal touchstart-touchend series of events followed by a mousedown-click series.
+        // That might be a bug, but until it's fixed, this should make action-handler work.
+        // If it's not a bug that is fixed, this might need updating with the next iOS version.
+        // Note that all events (both touch and mouse) must be listened for in order to work on computers with both mouse and touchscreen.
+        const isIOS13 = window.navigator.userAgent.match(/iPhone OS 13_/);
+        if (!isIOS13) {
+            element.addEventListener("mousedown", clickStart, { passive: true });
+            element.addEventListener("click", clickEnd);
+        }
+    }
+    startAnimation(x, y) {
+        Object.assign(this.style, {
+            left: `${x}px`,
+            top: `${y}px`,
+            display: null,
+        });
+        this.ripple.disabled = false;
+        this.ripple.active = true;
+        this.ripple.unbounded = true;
+    }
+    stopAnimation() {
+        this.ripple.active = false;
+        this.ripple.disabled = true;
+        this.style.display = "none";
+    }
+}
+customElements.define("action-handler-radial", ActionHandler);
+const geActionHandler = () => {
+    const body = document.body;
+    if (body.querySelector("action-handler-radial")) {
+        return body.querySelector("action-handler-radial");
+    }
+    const actionhandler = document.createElement("action-handler-radial");
+    body.appendChild(actionhandler);
+    return actionhandler;
+};
+const actionHandlerBind = (element, options) => {
+    const actionhandler = geActionHandler();
+    if (!actionhandler) {
+        return;
+    }
+    actionhandler.bind(element, options);
+};
+const actionHandler = directive((options = {}) => (part) => {
+    actionHandlerBind(part.committer.element, options);
+});
+
+/* eslint no-console: 0 */
+console.info(`%c  RADIAL-MENU   \n%c  Version ${CARD_VERSION} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
 let RadialMenu = class RadialMenu extends LitElement {
     setConfig(config) {
-        if (!config || !config.items) {
+        if (!config) {
             throw new Error("Invalid configuration");
+        }
+        if (!config.items) {
+            throw new Error("Invalid configuration: No items defined");
         }
         this._config = Object.assign({ icon: "mdi:menu", name: "menu", tap_action: {
                 action: "toggle-menu"
             }, hold_action: {
+                action: "none"
+            }, double_tap_action: {
                 action: "none"
             }, default_dismiss: true }, config);
     }
@@ -2389,63 +2934,64 @@ let RadialMenu = class RadialMenu extends LitElement {
         if (!this._config || !this.hass) {
             return html ``;
         }
+        this._config.items.forEach(item => {
+            if (item.card) {
+                item.element = O(item.card);
+                item.element.hass = this.hass;
+                item.element.classList.add("custom");
+            }
+        });
         return html `
       <nav class="circular-menu">
         <div class="circle">
           ${this._config.items.map((item, index) => {
+            const left = (50 -
+                35 *
+                    Math.cos(-0.5 * Math.PI -
+                        2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(4) + "%";
+            const top = (50 +
+                35 *
+                    Math.sin(-0.5 * Math.PI -
+                        2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(4) + "%";
+            if (item.card) {
+                item.element.style.setProperty("left", left);
+                item.element.style.setProperty("top", top);
+            }
             return item.entity_picture
                 ? html `
                   <state-badge
-                    @ha-click="${this._handleTap}"
-                    @ha-hold="${this._handleHold}"
-                    .longpress="${y()}"
-                    .config="${item}"
-                    .stateObj="${{
+                    @action=${this._handleAction}
+                    .actionHandler=${actionHandler({
+                    hasHold: G(item.hold_action),
+                    hasDoubleTap: G(item.double_tap_action),
+                })}
+                    .config=${item}
+                    .stateObj=${{
                     attributes: {
                         entity_picture: item.entity_picture
                     },
                     entity_id: "sensor.fake"
-                }}"
+                }}
                     style="
-                left:${(50 -
-                    35 *
-                        Math.cos(-0.5 * Math.PI -
-                            2 *
-                                (1 / this._config.items.length) *
-                                index *
-                                Math.PI)).toFixed(4) + "%"};
-                top:${(50 +
-                    35 *
-                        Math.sin(-0.5 * Math.PI -
-                            2 *
-                                (1 / this._config.items.length) *
-                                index *
-                                Math.PI)).toFixed(4) + "%"};"
+                left:${left};
+                top:${top};"
                   ></state-badge>
                 `
-                : html `
+                : item.card
+                    ? item.element
+                    : html `
                   <ha-icon
-                    @ha-click="${this._handleTap}"
-                    @ha-hold="${this._handleHold}"
-                    .longpress="${y()}"
-                    .config="${item}"
-                    .icon="${item.icon}"
-                    .title="${item.name}"
+                    @action=${this._handleAction}
+                    .actionHandler=${actionHandler({
+                        hasHold: G(item.hold_action),
+                        hasDoubleTap: G(item.double_tap_action),
+                    })}
+                    .config=${item}
+                    .icon=${item.icon}
+                    .title=${item.name}
                     style="
-                left:${(50 -
-                    35 *
-                        Math.cos(-0.5 * Math.PI -
-                            2 *
-                                (1 / this._config.items.length) *
-                                index *
-                                Math.PI)).toFixed(4) + "%"};
-                top:${(50 +
-                    35 *
-                        Math.sin(-0.5 * Math.PI -
-                            2 *
-                                (1 / this._config.items.length) *
-                                index *
-                                Math.PI)).toFixed(4) + "%"};"
+                left:${left};
+                top:${top};"
                   ></ha-icon>
                 `;
         })}
@@ -2454,27 +3000,31 @@ let RadialMenu = class RadialMenu extends LitElement {
             ? html `
               <state-badge
                 class="menu-button"
-                @ha-click="${this._handleTap}"
-                @ha-hold="${this._handleHold}"
-                .longpress="${y()}"
-                .config="${this._config}"
-                .stateObj="${{
+                @action=${this._handleAction}
+                .actionHandler=${actionHandler({
+                hasHold: G(this._config.hold_action),
+                hasDoubleTap: G(this._config.double_tap_action),
+            })}
+                .config=${this._config}
+                .stateObj=${{
                 attributes: {
                     entity_picture: this._config.entity_picture
                 },
                 entity_id: "sensor.fake"
-            }}"
+            }}
               ></state-badge>
             `
             : html `
               <ha-icon
                 class="menu-button"
-                .icon="${this._config.icon}"
-                .title="${this._config.name}"
-                .config="${this._config}"
-                @ha-click="${this._handleTap}"
-                @ha-hold="${this._handleHold}"
-                .longpress="${y()}"
+                @action=${this._handleAction}
+                .actionHandler=${actionHandler({
+                hasHold: G(this._config.hold_action),
+                hasDoubleTap: G(this._config.double_tap_action),
+            })}
+                .icon=${this._config.icon}
+                .title=${this._config.name}
+                .config=${this._config}
               ></ha-icon>
             `}
       </nav>
@@ -2488,7 +3038,7 @@ let RadialMenu = class RadialMenu extends LitElement {
     _toggleMenu() {
         this.shadowRoot.querySelector(".circle").classList.toggle("open");
     }
-    _handleTap(ev) {
+    _handleAction(ev) {
         const config = ev.target.config;
         if (config &&
             config.tap_action &&
@@ -2496,21 +3046,7 @@ let RadialMenu = class RadialMenu extends LitElement {
             this._toggleMenu();
         }
         else {
-            w(this, this.hass, config, false);
-            if (this._config.default_dismiss) {
-                this._toggleMenu();
-            }
-        }
-    }
-    _handleHold(ev) {
-        const config = ev.target.config;
-        if (config &&
-            config.hold_action &&
-            config.hold_action.action === "toggle-menu") {
-            this._toggleMenu();
-        }
-        else {
-            w(this, this.hass, config, true);
+            W(this, this.hass, config, ev.detail.action);
             if (this._config.default_dismiss) {
                 this._toggleMenu();
             }
@@ -2547,17 +3083,29 @@ let RadialMenu = class RadialMenu extends LitElement {
       }
 
       .circle ha-icon,
+      .circle state-badge,
+      .custom {
+        display: block;
+        position: absolute;
+      }
+
+      .custom {
+        height: 100px;
+        width: 100px;
+        margin-left: -40px;
+        margin-top: -25px;
+      }
+
+      .circle ha-icon,
       .circle state-badge {
         text-decoration: none;
-        display: block;
+        border-radius: 50%;
+        text-align: center;
         height: 40px;
         width: 40px;
         line-height: 40px;
         margin-left: -20px;
         margin-top: -20px;
-        position: absolute;
-        text-align: center;
-        border-radius: 50%;
       }
 
       .circle ha-icon:hover {

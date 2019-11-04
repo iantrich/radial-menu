@@ -7,19 +7,36 @@ import {
   css,
   CSSResult
 } from "lit-element";
+import {
+  HomeAssistant,
+  handleAction,
+  hasAction,
+  createThing
+} from "custom-card-helpers";
 
 import { RadialMenuConfig } from "./types";
-import { HomeAssistant, handleClick, longPress } from "custom-card-helpers";
+import { CARD_VERSION } from "./const";
+import { actionHandler } from "./action-handler-directive";
+
+/* eslint no-console: 0 */
+console.info(
+  `%c  RADIAL-MENU   \n%c  Version ${CARD_VERSION} `,
+  "color: orange; font-weight: bold; background: black",
+  "color: white; font-weight: bold; background: dimgray"
+);
 
 @customElement("radial-menu")
 class RadialMenu extends LitElement {
   @property() public hass?: HomeAssistant;
-
   @property() private _config?: RadialMenuConfig;
 
   public setConfig(config: RadialMenuConfig): void {
-    if (!config || !config.items) {
+    if (!config) {
       throw new Error("Invalid configuration");
+    }
+
+    if (!config.items) {
+      throw new Error("Invalid configuration: No items defined");
     }
 
     this._config = {
@@ -28,7 +45,10 @@ class RadialMenu extends LitElement {
       tap_action: {
         action: "toggle-menu"
       },
-      hold_action : {
+      hold_action: {
+        action: "none"
+      },
+      double_tap_action: {
         action: "none"
       },
       default_dismiss: true,
@@ -45,79 +65,77 @@ class RadialMenu extends LitElement {
       return html``;
     }
 
+    this._config.items.forEach(item => {
+      if (item.card) {
+        item.element = createThing(item.card);
+        item.element!.hass = this.hass;
+        item.element!.classList.add("custom");
+      }
+    });
+
     return html`
       <nav class="circular-menu">
         <div class="circle">
           ${this._config.items.map((item, index) => {
+            const left =
+              (
+                50 -
+                35 *
+                  Math.cos(
+                    -0.5 * Math.PI -
+                      2 * (1 / this._config!.items.length) * index * Math.PI
+                  )
+              ).toFixed(4) + "%";
+            const top =
+              (
+                50 +
+                35 *
+                  Math.sin(
+                    -0.5 * Math.PI -
+                      2 * (1 / this._config!.items.length) * index * Math.PI
+                  )
+              ).toFixed(4) + "%";
+
+            if (item.card) {
+              item.element!.style.setProperty("left", left);
+              item.element!.style.setProperty("top", top);
+            }
+
             return item.entity_picture
               ? html`
                   <state-badge
-                    @ha-click="${this._handleTap}"
-                    @ha-hold="${this._handleHold}"
-                    .longpress="${longPress()}"
-                    .config="${item}"
-                    .stateObj="${{
+                    @action=${this._handleAction}
+                    .actionHandler=${actionHandler({
+                      hasHold: hasAction(item.hold_action),
+                      hasDoubleTap: hasAction(item.double_tap_action),
+                    })}
+                    .config=${item}
+                    .stateObj=${{
                       attributes: {
                         entity_picture: item.entity_picture
                       },
                       entity_id: "sensor.fake"
-                    }}"
+                    }}
                     style="
-                left:${(
-                      50 -
-                      35 *
-                        Math.cos(
-                          -0.5 * Math.PI -
-                            2 *
-                              (1 / this._config!.items.length) *
-                              index *
-                              Math.PI
-                        )
-                    ).toFixed(4) + "%"};
-                top:${(
-                      50 +
-                      35 *
-                        Math.sin(
-                          -0.5 * Math.PI -
-                            2 *
-                              (1 / this._config!.items.length) *
-                              index *
-                              Math.PI
-                        )
-                    ).toFixed(4) + "%"};"
+                left:${left};
+                top:${top};"
                   ></state-badge>
                 `
+              : item.card
+              ? item.element
               : html`
                   <ha-icon
-                    @ha-click="${this._handleTap}"
-                    @ha-hold="${this._handleHold}"
-                    .longpress="${longPress()}"
-                    .config="${item}"
-                    .icon="${item.icon}"
-                    .title="${item.name}"
+                    @action=${this._handleAction}
+                    .actionHandler=${actionHandler({
+                      hasHold: hasAction(item.hold_action),
+                      hasDoubleTap: hasAction(item.double_tap_action),
+                    })}
+                    .config=${item}
+                    .icon=${item.icon}
+                    .title=${item.name}
                     style="
-                left:${(
-                      50 -
-                      35 *
-                        Math.cos(
-                          -0.5 * Math.PI -
-                            2 *
-                              (1 / this._config!.items.length) *
-                              index *
-                              Math.PI
-                        )
-                    ).toFixed(4) + "%"};
-                top:${(
-                      50 +
-                      35 *
-                        Math.sin(
-                          -0.5 * Math.PI -
-                            2 *
-                              (1 / this._config!.items.length) *
-                              index *
-                              Math.PI
-                        )
-                    ).toFixed(4) + "%"};"
+                left:${left};
+                top:${top};"
                   ></ha-icon>
                 `;
           })}
@@ -126,27 +144,31 @@ class RadialMenu extends LitElement {
           ? html`
               <state-badge
                 class="menu-button"
-                @ha-click="${this._handleTap}"
-                @ha-hold="${this._handleHold}"
-                .longpress="${longPress()}"
-                .config="${this._config}"
-                .stateObj="${{
+                @action=${this._handleAction}
+                .actionHandler=${actionHandler({
+                  hasHold: hasAction(this._config.hold_action),
+                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                })}
+                .config=${this._config}
+                .stateObj=${{
                   attributes: {
                     entity_picture: this._config.entity_picture
                   },
                   entity_id: "sensor.fake"
-                }}"
+                }}
               ></state-badge>
             `
           : html`
               <ha-icon
                 class="menu-button"
-                .icon="${this._config.icon}"
-                .title="${this._config.name}"
-                .config="${this._config}"
-                @ha-click="${this._handleTap}"
-                @ha-hold="${this._handleHold}"
-                .longpress="${longPress()}"
+                @action=${this._handleAction}
+                .actionHandler=${actionHandler({
+                  hasHold: hasAction(this._config.hold_action),
+                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                })}
+                .icon=${this._config.icon}
+                .title=${this._config.name}
+                .config=${this._config}
               ></ha-icon>
             `}
       </nav>
@@ -159,11 +181,11 @@ class RadialMenu extends LitElement {
     }
   }
 
-  private _toggleMenu() {
+  private _toggleMenu(): void {
     this.shadowRoot!.querySelector(".circle")!.classList.toggle("open");
   }
 
-  private _handleTap(ev) {
+  private _handleAction(ev): void {
     const config = ev.target.config;
     if (
       config &&
@@ -172,23 +194,7 @@ class RadialMenu extends LitElement {
     ) {
       this._toggleMenu();
     } else {
-      handleClick(this, this.hass!, config, false);
-      if (this._config!.default_dismiss) {
-        this._toggleMenu();
-      }
-    }
-  }
-
-  private _handleHold(ev) {
-    const config = ev.target.config;
-    if (
-      config &&
-      config.hold_action &&
-      config.hold_action.action === "toggle-menu"
-    ) {
-      this._toggleMenu();
-    } else {
-      handleClick(this, this.hass!, config, true);
+      handleAction(this, this.hass!, config, ev.detail.action!);
       if (this._config!.default_dismiss) {
         this._toggleMenu();
       }
@@ -226,17 +232,29 @@ class RadialMenu extends LitElement {
       }
 
       .circle ha-icon,
+      .circle state-badge,
+      .custom {
+        display: block;
+        position: absolute;
+      }
+
+      .custom {
+        height: 100px;
+        width: 100px;
+        margin-left: -40px;
+        margin-top: -25px;
+      }
+
+      .circle ha-icon,
       .circle state-badge {
         text-decoration: none;
-        display: block;
+        border-radius: 50%;
+        text-align: center;
         height: 40px;
         width: 40px;
         line-height: 40px;
         margin-left: -20px;
         margin-top: -20px;
-        position: absolute;
-        text-align: center;
-        border-radius: 50%;
       }
 
       .circle ha-icon:hover {
