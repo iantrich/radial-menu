@@ -1,4 +1,4 @@
-import { ActionConfig, HomeAssistant } from "custom-card-helpers";
+import { ActionConfig, LovelaceCardConfig, LovelaceCard } from 'custom-card-helpers';
 
 export interface RadialMenuConfig {
   type: string;
@@ -23,18 +23,4 @@ export interface RadialMenuItemConfig {
   hold_action?: ActionConfig;
   card?: LovelaceCardConfig;
   element?: LovelaceCard;
-}
-
-export interface LovelaceCard extends HTMLElement {
-  hass?: HomeAssistant;
-  isPanel?: boolean;
-  getCardSize(): number;
-  setConfig(config: LovelaceCardConfig): void;
-}
-
-export interface LovelaceCardConfig {
-  index?: number;
-  view_index?: number;
-  type: string;
-  [key: string]: any;
 }

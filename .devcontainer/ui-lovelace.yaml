@@ -1,0 +1,41 @@
+resources:
+  - url: http://127.0.0.1:5000/radial-menu.js
+    type: module
+views:
+  - cards:
+      - type: custom:radial-menu
+        icon: mdi:home
+        name: Home
+        default_open: true
+        default_dismiss: false
+        hold_action:
+          action: url
+          url: https://www.home-assistant.io
+        items:
+          - entity: light.bed_light
+            icon: mdi:flash
+            name: Bedroom Light
+            tap_action:
+              action: toggle
+              haptic: true
+            hold_action:
+              action: more-info
+          - entity: alarm_control_panel.ha_alarm
+            icon: mdi:alarm-light
+            name: Alarm Panel
+            tap_action:
+              action: more-info
+          - icon: mdi:alarm
+            name: Timer
+            tap_action:
+              action: call-service
+              service: timer.start
+              service_data:
+                entity_id: timer.laundry
+              haptic: true
+            hold_action:
+              action: call-service
+              service: timer.pause
+              service_data:
+                entity_id: timer.laundry
+              haptic: true

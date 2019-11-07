@@ -1,58 +1,45 @@
-import {
-  LitElement,
-  html,
-  customElement,
-  property,
-  TemplateResult,
-  css,
-  CSSResult
-} from "lit-element";
-import {
-  HomeAssistant,
-  handleAction,
-  hasAction,
-  createThing
-} from "custom-card-helpers";
+import { LitElement, html, customElement, property, TemplateResult, css, CSSResult } from 'lit-element';
+import { HomeAssistant, handleAction, hasAction, createThing } from 'custom-card-helpers';
 
-import { RadialMenuConfig } from "./types";
-import { CARD_VERSION } from "./const";
-import { actionHandler } from "./action-handler-directive";
+import { RadialMenuConfig } from './types';
+import { CARD_VERSION } from './const';
+import { actionHandler } from './action-handler-directive';
 
 /* eslint no-console: 0 */
 console.info(
   `%c  RADIAL-MENU   \n%c  Version ${CARD_VERSION} `,
-  "color: orange; font-weight: bold; background: black",
-  "color: white; font-weight: bold; background: dimgray"
+  'color: orange; font-weight: bold; background: black',
+  'color: white; font-weight: bold; background: dimgray',
 );
 
-@customElement("radial-menu")
-class RadialMenu extends LitElement {
+@customElement('radial-menu')
+export class RadialMenu extends LitElement {
   @property() public hass?: HomeAssistant;
   @property() private _config?: RadialMenuConfig;
 
   public setConfig(config: RadialMenuConfig): void {
     if (!config) {
-      throw new Error("Invalid configuration");
+      throw new Error('Invalid configuration');
     }
 
     if (!config.items) {
-      throw new Error("Invalid configuration: No items defined");
+      throw new Error('Invalid configuration: No items defined');
     }
 
     this._config = {
-      icon: "mdi:menu",
-      name: "menu",
+      icon: 'mdi:menu',
+      name: 'menu',
       tap_action: {
-        action: "toggle-menu"
+        action: 'toggle-menu',
       },
       hold_action: {
-        action: "none"
+        action: 'none',
       },
       double_tap_action: {
-        action: "none"
+        action: 'none',
       },
       default_dismiss: true,
-      ...config
+      ...config,
     };
   }
 
@@ -68,8 +55,11 @@ class RadialMenu extends LitElement {
     this._config.items.forEach(item => {
       if (item.card) {
         item.element = createThing(item.card);
-        item.element!.hass = this.hass;
-        item.element!.classList.add("custom");
+
+        if (item.element) {
+          item.element.hass = this.hass;
+          item.element.classList.add('custom');
+        }
       }
     });
 
@@ -77,28 +67,20 @@ class RadialMenu extends LitElement {
       <nav class="circular-menu">
         <div class="circle">
           ${this._config.items.map((item, index) => {
-            const left =
-              (
-                50 -
-                35 *
-                  Math.cos(
-                    -0.5 * Math.PI -
-                      2 * (1 / this._config!.items.length) * index * Math.PI
-                  )
-              ).toFixed(4) + "%";
-            const top =
-              (
-                50 +
-                35 *
-                  Math.sin(
-                    -0.5 * Math.PI -
-                      2 * (1 / this._config!.items.length) * index * Math.PI
-                  )
-              ).toFixed(4) + "%";
+            const left = this._config
+              ? (50 - 35 * Math.cos(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
+                  4,
+                ) + '%'
+              : '';
+            const top = this._config
+              ? (50 + 35 * Math.sin(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
+                  4,
+                ) + '%'
+              : '';
 
-            if (item.card) {
-              item.element!.style.setProperty("left", left);
-              item.element!.style.setProperty("top", top);
+            if (item.card && item.element) {
+              item.element.style.setProperty('left', left);
+              item.element.style.setProperty('top', top);
             }
 
             return item.entity_picture
@@ -107,14 +89,14 @@ class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action)
+                      hasDoubleTap: hasAction(item.double_tap_action),
                     })}
                     .config=${item}
                     .stateObj=${{
                       attributes: {
-                        entity_picture: item.entity_picture
+                        entity_picture: item.entity_picture,
                       },
-                      entity_id: "sensor.fake"
+                      entity_id: 'sensor.fake',
                     }}
                     style="
                 left:${left};
@@ -128,7 +110,7 @@ class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action)
+                      hasDoubleTap: hasAction(item.double_tap_action),
                     })}
                     .config=${item}
                     .icon=${item.icon}
@@ -148,14 +130,14 @@ class RadialMenu extends LitElement {
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action)
+                  hasDoubleTap: hasAction(this._config.double_tap_action),
                 })}
                 .config=${this._config}
                 .stateObj=${{
                   attributes: {
-                    entity_picture: this._config.entity_picture
+                    entity_picture: this._config.entity_picture,
                   },
-                  entity_id: "sensor.fake"
+                  entity_id: 'sensor.fake',
                 }}
               ></state-badge>
             `
@@ -166,7 +148,7 @@ class RadialMenu extends LitElement {
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action)
+                  hasDoubleTap: hasAction(this._config.double_tap_action),
                 })}
                 .icon=${this._config.icon}
                 .title=${this._config.name}
@@ -184,29 +166,33 @@ class RadialMenu extends LitElement {
   }
 
   private _toggleMenu(): void {
-    this.shadowRoot!.querySelector(".circle")!.classList.toggle("open");
+    if (this.shadowRoot) {
+      const element = this.shadowRoot.querySelector('.circle');
+
+      if (element) {
+        element.classList.toggle('open');
+      }
+    }
   }
 
   private _handleAction(ev): void {
     const config = ev.target.config;
-    console.log(config);
 
     if (
       config &&
-      ((ev.detail.action! === "tap" &&
-        config.tap_action &&
-        config.tap_action.action === "toggle-menu") ||
-        (ev.detail.action! === "hold" &&
-          config.hold_action &&
-          config.hold_action.action === "toggle-menu") ||
-        (ev.detail.action! === "double_tap" &&
+      ev.detail.action &&
+      ((ev.detail.action === 'tap' && config.tap_action && config.tap_action.action === 'toggle-menu') ||
+        (ev.detail.action === 'hold' && config.hold_action && config.hold_action.action === 'toggle-menu') ||
+        (ev.detail.action === 'double_tap' &&
           config.double_tap_action &&
-          config.double_tap_action.action === "toggle-menu"))
+          config.double_tap_action.action === 'toggle-menu'))
     ) {
       this._toggleMenu();
     } else {
-      handleAction(this, this.hass!, config, ev.detail.action!);
-      if (this._config!.default_dismiss && !ev.target.menu) {
+      if (this.hass && ev.detail.action) {
+        handleAction(this, this.hass, config, ev.detail.action);
+      }
+      if (this._config && this._config.default_dismiss && !ev.target.menu) {
         this._toggleMenu();
       }
     }
