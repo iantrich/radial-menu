@@ -57,7 +57,7 @@ export class RadialMenu extends LitElement {
 
     this._config.items.forEach(item => {
       if (item.card) {
-        item.element = this._helpers ? this._helpers.createEntityRow(item.card) : createThing(item.card);
+        item.element = this._helpers ? this._helpers.createCardElement(item.card) : createThing(item.card);
 
         if (item.element) {
           item.element.hass = this.hass;
