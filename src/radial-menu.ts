@@ -16,6 +16,7 @@ console.info(
 export class RadialMenu extends LitElement {
   @property() public hass?: HomeAssistant;
   @property() private _config?: RadialMenuConfig;
+  @property() private _helpers?: any;
 
   public setConfig(config: RadialMenuConfig): void {
     if (!config) {
@@ -41,6 +42,8 @@ export class RadialMenu extends LitElement {
       default_dismiss: true,
       ...config,
     };
+
+    this.loadCardHelpers();
   }
 
   public getCardSize(): number {
@@ -54,7 +57,7 @@ export class RadialMenu extends LitElement {
 
     this._config.items.forEach(item => {
       if (item.card) {
-        item.element = createThing(item.card);
+        item.element = this._helpers ? this._helpers.createEntityRow(item.card) : createThing(item.card);
 
         if (item.element) {
           item.element.hass = this.hass;
@@ -173,6 +176,10 @@ export class RadialMenu extends LitElement {
         element.classList.toggle('open');
       }
     }
+  }
+
+  private async loadCardHelpers(): Promise<void> {
+    this._helpers = await (window as any).loadCardHelpers();
   }
 
   private _handleAction(ev): void {
