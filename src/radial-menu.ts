@@ -92,7 +92,7 @@ export class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action),
+                      hasDoubleClick: hasAction(item.double_tap_action),
                     })}
                     .config=${item}
                     .stateObj=${{
@@ -113,7 +113,7 @@ export class RadialMenu extends LitElement {
                     @action=${this._handleAction}
                     .actionHandler=${actionHandler({
                       hasHold: hasAction(item.hold_action),
-                      hasDoubleTap: hasAction(item.double_tap_action),
+                      hasDoubleClick: hasAction(item.double_tap_action),
                     })}
                     .config=${item}
                     .icon=${item.icon}
@@ -133,7 +133,7 @@ export class RadialMenu extends LitElement {
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                  hasDoubleClick: hasAction(this._config.double_tap_action),
                 })}
                 .config=${this._config}
                 .stateObj=${{
@@ -151,7 +151,7 @@ export class RadialMenu extends LitElement {
                 @action=${this._handleAction}
                 .actionHandler=${actionHandler({
                   hasHold: hasAction(this._config.hold_action),
-                  hasDoubleTap: hasAction(this._config.double_tap_action),
+                  hasDoubleClick: hasAction(this._config.double_tap_action),
                 })}
                 .icon=${this._config.icon}
                 .title=${this._config.name}
