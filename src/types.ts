@@ -2,7 +2,7 @@ import { ActionConfig, LovelaceCardConfig, LovelaceCard } from 'custom-card-help
 
 export interface RadialMenuConfig {
   type: string;
-  name: string;
+  name?: string;
   icon?: string;
   entity_picture?: string;
   default_open?: boolean;
@@ -11,6 +11,7 @@ export interface RadialMenuConfig {
   double_tap_action?: ActionConfig;
   hold_action?: ActionConfig;
   items: RadialMenuItemConfig[];
+  theme?: string;
 }
 
 export interface RadialMenuItemConfig {

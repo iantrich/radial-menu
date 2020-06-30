@@ -15,6 +15,10 @@
 
 This element is for [Lovelace](https://www.home-assistant.io/lovelace) on [Home Assistant](https://www.home-assistant.io/) that provides a radial menu on click for quick/space saving access to commands. Designed for picture-elements, but can be used anywhere.
 
+## Minimum Home Assistant Version
+
+Home Assistant version 0.110.0 or higher is required as of release 1.2.0 of restriction-card
+
 ## Support
 
 Hey dude! Help me out for a couple of :beers: or a :coffee:!
@@ -48,6 +52,7 @@ resources:
 | `tap_action`        | `map`     | **Optional** | Action to take on tap. See [action options](#action-options)              | `action: toggle-menu` |
 | `hold_action`       | `map`     | **Optional** | Action to take on hold. See [action options](#action-options)             | `none`                |
 | `double_tap_action` | `map`     | **Optional** | Action to take on double tap. See [action options](#action-options)       | `action: none`        |
+| theme               | `string`  | **Optional** | Card theme                                                                |
 
 ## Item Options
 
@@ -74,12 +79,24 @@ resources:
 | `service_data`    | `map`    | none     | Any service data                                                         | Service data to include (e.g. `entity_id: media_player.bedroom`) when `action` defined as `call-service`. |
 | `haptic`          | `string` | none     | `success`, `warning`, `failure`, `light`, `medium`, `heavy`, `selection` | Haptic feedback for the [Beta IOS App](http://home-assistant.io/ios/beta)                                 |
 
+## Theme Variables
+
+The following variables are available and can be set in your theme to change the appearance of the radial menu.
+
+Can be specified by color name, hexadecimal, rgb, rgba, hsl, hsla, basically anything supported by CSS.
+
+| name                       | Default         | Description |
+| -------------------------- | --------------- | ----------- |
+| `radial-icon-size`         | `24px`          | icon size   |
+| `radial-menu-button-color` | `primary-color` | Menu color  |
+| `radial-menu-item-color`   | `primary-color` | Item color  |
+
 ## Usage
 
 ```yaml
-type: "custom:radial-menu"
-icon: "mdi:home"
-name: "Home"
+type: 'custom:radial-menu'
+icon: 'mdi:home'
+name: 'Home'
 default_open: true
 default_dismiss: false
 hold_action:
@@ -87,7 +104,7 @@ hold_action:
   url: https://www.home-assistant.io
 items:
   - entity: light.bed_light
-    icon: "mdi:flash"
+    icon: 'mdi:flash'
     name: Bedroom Light
     tap_action:
       action: toggle
@@ -95,11 +112,11 @@ items:
     hold_action:
       action: more-info
   - entity: alarm_control_panel.ha_alarm
-    icon: "mdi:alarm-light"
+    icon: 'mdi:alarm-light'
     name: Alarm Panel
     tap_action:
       action: more-info
-  - icon: "mdi:alarm"
+  - icon: 'mdi:alarm'
     name: Timer
     tap_action:
       action: call-service
@@ -113,18 +130,18 @@ items:
       service_data:
         entity_id: timer.laundry
       haptic: true
-  - entity_picture: "/local/headphones.png"
+  - entity_picture: '/local/headphones.png'
     name: Podcasts
     tap_action:
       action: navigate
       navigation_path: /lovelace/1
   - card:
-      type: "custom:button-card"
+      type: 'custom:button-card'
       entity: light.kitchen
       show_name: false
       styles:
         card:
-          - background-color: "rgba(0, 0, 0, 0)"
+          - background-color: 'rgba(0, 0, 0, 0)'
           - box-shadow: 0px 0px 0px 0px black
 ```
 

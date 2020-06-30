@@ -1,5 +1,5 @@
-import { LitElement, html, customElement, property, TemplateResult, css, CSSResult } from 'lit-element';
-import { HomeAssistant, handleAction, hasAction, createThing } from 'custom-card-helpers';
+import { LitElement, html, customElement, property, TemplateResult, css, CSSResult, PropertyValues } from 'lit-element';
+import { HomeAssistant, handleAction, hasAction, createThing, applyThemesOnElement } from 'custom-card-helpers';
 
 import { RadialMenuConfig } from './types';
 import { CARD_VERSION } from './const';
@@ -17,6 +17,7 @@ export class RadialMenu extends LitElement {
   @property() public hass?: HomeAssistant;
   @property() private _config?: RadialMenuConfig;
   @property() private _helpers?: any;
+  private _initialized = false;
 
   public setConfig(config: RadialMenuConfig): void {
     if (!config) {
@@ -46,18 +47,27 @@ export class RadialMenu extends LitElement {
     this.loadCardHelpers();
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected shouldUpdate(changedProps: PropertyValues): boolean {
+    if (changedProps && !this._initialized) {
+      this._initialize();
+    }
+
+    return true;
+  }
+
   public getCardSize(): number {
     return 1;
   }
 
   protected render(): TemplateResult | void {
-    if (!this._config || !this.hass) {
+    if (!this._config || !this.hass || !this._helpers) {
       return html``;
     }
 
     this._config.items.forEach(item => {
       if (item.card) {
-        item.element = this._helpers ? this._helpers.createCardElement(item.card) : createThing(item.card);
+        item.element = this._helpers.createCardElement(item.card);
 
         if (item.element) {
           item.element.hass = this.hass;
@@ -117,7 +127,7 @@ export class RadialMenu extends LitElement {
                     })}
                     .config=${item}
                     .icon=${item.icon}
-                    .title=${item.name}
+                    .title=${item.name ? item.name : ''}
                     style="
                 left:${left};
                 top:${top};"
@@ -154,7 +164,7 @@ export class RadialMenu extends LitElement {
                   hasDoubleClick: hasAction(this._config.double_tap_action),
                 })}
                 .icon=${this._config.icon}
-                .title=${this._config.name}
+                .title=${this._config.name ? this._config.name : ''}
                 .config=${this._config}
               ></ha-icon>
             `}
@@ -176,6 +186,13 @@ export class RadialMenu extends LitElement {
         element.classList.toggle('open');
       }
     }
+  }
+
+  private _initialize(): void {
+    if (this.hass === undefined) return;
+    if (this._config === undefined) return;
+    if (this._helpers === undefined) return;
+    this._initialized = true;
   }
 
   private async loadCardHelpers(): Promise<void> {
@@ -205,8 +222,31 @@ export class RadialMenu extends LitElement {
     }
   }
 
+  protected updated(changedProps): void {
+    if (!this._config) {
+      return;
+    }
+
+    if (this.hass) {
+      const oldHass = changedProps.get('hass');
+      if (!oldHass || oldHass.themes !== this.hass.themes) {
+        applyThemesOnElement(this, this.hass.themes, this._config.theme);
+      }
+    }
+  }
+
   static get styles(): CSSResult {
     return css`
+      :host {
+        --icon-size: var(--radial-icon-size, var(--mdc-icon-size, 24px));
+        --menu-button-color: var(--radial-menu-button-color, var(--primary-color, #212121));
+        --menu-item-color: var(--radial-menu-item-color, var(--primary-color, #212121));
+      }
+
+      ha-icon {
+        --mdc-icon-size: var(--icon-size);
+      }
+
       .circular-menu {
         width: 250px;
         height: 250px;
@@ -259,6 +299,7 @@ export class RadialMenu extends LitElement {
         line-height: 40px;
         margin-left: -20px;
         margin-top: -20px;
+        color: var(--menu-item-color);
       }
 
       .circle ha-icon:hover {
@@ -272,7 +313,6 @@ export class RadialMenu extends LitElement {
       ha-icon,
       state-badge {
         cursor: pointer;
-        color: var(--primary-color);
       }
 
       ha-icon {
@@ -288,6 +328,7 @@ export class RadialMenu extends LitElement {
         height: 40px;
         width: 40px;
         line-height: 40px;
+        color: var(--menu-button-color);
       }
 
       state-badge.menu-button {
