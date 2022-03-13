@@ -53,7 +53,7 @@ resources:
 | `hold_action`       | `map`     | **Optional** | Action to take on hold. See [action options](#action-options)             | `none`                |
 | `double_tap_action` | `map`     | **Optional** | Action to take on double tap. See [action options](#action-options)       | `action: none`        |
 | `theme`             | `string`  | **Optional** | Card theme                                                                |                       |
-| `items_offset`      | `number`  | **Optional** | Distance of items from menu center                                        | `0`                   |
+| `items_offset`      | `number`  | **Optional** | Distance of items from menu center                                        | `35`                   |
 
 ## Item Options
 
