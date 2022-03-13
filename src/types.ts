@@ -12,6 +12,7 @@ export interface RadialMenuConfig {
   hold_action?: ActionConfig;
   items: RadialMenuItemConfig[];
   theme?: string;
+  items_offset?: number;
 }
 
 export interface RadialMenuItemConfig {

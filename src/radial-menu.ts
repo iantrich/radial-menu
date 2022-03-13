@@ -41,6 +41,7 @@ export class RadialMenu extends LitElement {
         action: 'none',
       },
       default_dismiss: true,
+      items_offset: 0,
       ...config,
     };
 
@@ -81,12 +82,12 @@ export class RadialMenu extends LitElement {
         <div class="circle">
           ${this._config.items.map((item, index) => {
             const left = this._config
-              ? (50 - 35 * Math.cos(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
+              ? (50 - (35 + (this._config?.items_offset ?? 0)) * Math.cos(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
                   4,
                 ) + '%'
               : '';
             const top = this._config
-              ? (50 + 35 * Math.sin(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
+              ? (50 + (35 + (this._config?.items_offset ?? 0)) * Math.sin(-0.5 * Math.PI - 2 * (1 / this._config.items.length) * index * Math.PI)).toFixed(
                   4,
                 ) + '%'
               : '';
