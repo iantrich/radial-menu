@@ -26,8 +26,10 @@ describe('Gesture', () => {
   it('emits only hold when the press lasts at least holdMs', () => {
     const g = new Gesture({ hasDoubleTap: false, emit });
     g.down();
-    vi.advanceTimersByTime(600);
+    vi.advanceTimersByTime(499);
     expect(emit).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(emit.mock.calls).toEqual([['hold']]);
     g.up();
     expect(emit.mock.calls).toEqual([['hold']]);
   });
@@ -82,11 +84,20 @@ describe('Gesture', () => {
     expect(emit.mock.calls).toEqual([['hold']]);
   });
 
-  it('cancel after down emits nothing and clears state', () => {
+  it('hold still fires when the pointer is cancelled after the hold time (touch long-press)', () => {
     const g = new Gesture({ hasDoubleTap: false, emit });
     g.down();
     vi.advanceTimersByTime(600);
     g.cancel();
+    expect(emit.mock.calls).toEqual([['hold']]);
+  });
+
+  it('cancel before the hold time emits nothing and clears state', () => {
+    const g = new Gesture({ hasDoubleTap: false, emit });
+    g.down();
+    vi.advanceTimersByTime(300);
+    g.cancel();
+    vi.advanceTimersByTime(1000);
     g.up();
     expect(emit).not.toHaveBeenCalled();
   });
@@ -101,11 +112,12 @@ describe('Gesture', () => {
     expect(emit).not.toHaveBeenCalled();
   });
 
-  it('dispose during a held press then up() emits nothing', () => {
+  it('dispose during a press then up() emits nothing', () => {
     const g = new Gesture({ hasDoubleTap: false, emit });
     g.down();
-    vi.advanceTimersByTime(600);
+    vi.advanceTimersByTime(300);
     g.dispose();
+    vi.advanceTimersByTime(1000);
     g.up();
     expect(emit).not.toHaveBeenCalled();
   });

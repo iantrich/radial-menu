@@ -8,16 +8,18 @@ export interface GestureOptions {
 }
 
 /**
- * Pointer-gesture timing, free of DOM references. Hold is decided on release
- * from the press duration; with double tap enabled a lone tap is delayed by
- * `doubleTapMs` so a second tap can upgrade it to `double_tap`.
+ * Pointer-gesture timing, free of DOM references. Hold fires from a timer once
+ * the press lasts `holdMs`, so it does not depend on a later pointerup (touch
+ * long-presses can end in pointercancel). With double tap enabled a lone tap
+ * is delayed by `doubleTapMs` so a second tap can upgrade it to `double_tap`.
  */
 export class Gesture {
   private readonly hasDoubleTap: boolean;
   private readonly emit: (action: GestureAction) => void;
   private readonly holdMs: number;
   private readonly doubleTapMs: number;
-  private pressedAt: number | undefined;
+  private pressed = false;
+  private holdTimer: ReturnType<typeof setTimeout> | undefined;
   private tapTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(opts: GestureOptions) {
@@ -28,19 +30,22 @@ export class Gesture {
   }
 
   down(): void {
-    this.pressedAt = Date.now();
+    this.clearHoldTimer();
+    this.pressed = true;
+    this.holdTimer = setTimeout(() => {
+      this.holdTimer = undefined;
+      if (!this.pressed) return;
+      // Consume the press: the release that follows must not become a tap.
+      this.pressed = false;
+      this.clearTapTimer();
+      this.emit('hold');
+    }, this.holdMs);
   }
 
   up(): void {
-    if (this.pressedAt === undefined) return;
-    const heldFor = Date.now() - this.pressedAt;
-    this.pressedAt = undefined;
-
-    if (heldFor >= this.holdMs) {
-      this.clearTapTimer();
-      this.emit('hold');
-      return;
-    }
+    if (!this.pressed) return;
+    this.pressed = false;
+    this.clearHoldTimer();
     if (!this.hasDoubleTap) {
       this.emit('tap');
       return;
@@ -57,12 +62,21 @@ export class Gesture {
   }
 
   cancel(): void {
-    this.pressedAt = undefined;
+    this.pressed = false;
+    this.clearHoldTimer();
   }
 
   dispose(): void {
-    this.pressedAt = undefined;
+    this.pressed = false;
+    this.clearHoldTimer();
     this.clearTapTimer();
+  }
+
+  private clearHoldTimer(): void {
+    if (this.holdTimer !== undefined) {
+      clearTimeout(this.holdTimer);
+      this.holdTimer = undefined;
+    }
   }
 
   private clearTapTimer(): void {

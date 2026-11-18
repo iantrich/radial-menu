@@ -81,6 +81,8 @@ export const styles = css`
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
   }
 
   .circle ha-icon:active,
