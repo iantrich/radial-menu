@@ -13,7 +13,8 @@ export interface RadialMenuConfig {
   items: RadialMenuItemConfig[];
   theme?: string;
   items_offset?: number;
-  size?: string;
+  /** Any CSS length; a number is taken as pixels. */
+  size?: string | number;
   start_angle?: number;
   arc?: number;
   close_on_outside_click?: boolean;

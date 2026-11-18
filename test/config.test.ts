@@ -51,6 +51,23 @@ describe('normalizeConfig', () => {
     });
   });
 
+  it('ignores null and undefined values so defaults still apply', () => {
+    const input = { items: [], items_offset: null, arc: undefined, name: 'Kept' };
+    const snapshot = { ...input };
+    const resolved = normalizeConfig(input);
+    expect(resolved.items_offset).toBe(35);
+    expect(resolved.arc).toBe(360);
+    expect(resolved.name).toBe('Kept');
+    expect(input).toEqual(snapshot);
+    expect('items_offset' in input).toBe(true);
+  });
+
+  it('coerces a numeric size to pixels and passes strings through', () => {
+    expect(normalizeConfig({ items: [], size: 300 }).size).toBe('300px');
+    expect(normalizeConfig({ items: [], size: '100%' }).size).toBe('100%');
+    expect(normalizeConfig({ items: [], size: '20em' }).size).toBe('20em');
+  });
+
   it('filters items down to plain objects', () => {
     const resolved = normalizeConfig({ items: [null, 3, { icon: 'mdi:a' }] });
     expect(resolved.items).toEqual([{ icon: 'mdi:a' }]);

@@ -41,7 +41,14 @@ const ITEM_SCHEMA: SchemaField[] = [
   ...actions,
 ];
 
+/** Toggles that default to on: shown on when absent, but only written once the user changes them. */
+const OPTION_DEFAULTS: Data = { default_dismiss: true, close_on_outside_click: true };
+
 const NEW_ITEM: RadialMenuItemConfig = { icon: 'mdi:gesture-tap' };
+
+/** A cleared field: the key is removed rather than saved as an empty value. */
+const isCleared = (value: unknown): boolean =>
+  value === undefined || value === null || value === '' || Number.isNaN(value);
 
 const isEditable = (item: unknown): item is RadialMenuItemConfig =>
   typeof item === 'object' && item !== null && !Array.isArray(item) && !('card' in item);
@@ -50,7 +57,7 @@ const isEditable = (item: unknown): item is RadialMenuItemConfig =>
 function merge<T extends object>(target: T, value: Data, schema: SchemaField[]): T {
   const next: Data = { ...(target as Data) };
   for (const { name } of schema) {
-    if (value[name] === undefined) delete next[name];
+    if (isCleared(value[name])) delete next[name];
     else next[name] = value[name];
   }
   return next as T;
@@ -79,6 +86,11 @@ export class RadialMenuEditor extends LitElement {
       flex: 1;
       font-weight: 500;
     }
+    .hint {
+      color: var(--secondary-text-color);
+      font-size: 0.9em;
+      margin: 4px 0 0;
+    }
     .yaml {
       color: var(--secondary-text-color);
       font-style: italic;
@@ -99,11 +111,14 @@ export class RadialMenuEditor extends LitElement {
       <ha-form
         class="options"
         .hass=${this.hass}
-        .data=${this._config}
+        .data=${{ ...OPTION_DEFAULTS, ...this._config }}
         .schema=${OPTIONS_SCHEMA}
         .computeLabel=${computeLabel}
         @value-changed=${this._optionsChanged}
       ></ha-form>
+      <p class="hint">
+        Leaving tap action empty keeps the default (toggles the menu). Setting an action replaces toggling.
+      </p>
       <h3>Items</h3>
       <div class="items">${items.map((item, index) => this._renderItem(item, index, items.length))}</div>
       <button class="add" @click=${this._addItem}>Add item</button>
@@ -146,7 +161,12 @@ export class RadialMenuEditor extends LitElement {
 
   private _optionsChanged(ev: CustomEvent): void {
     ev.stopPropagation();
-    this._update(merge(this._config!, ev.detail.value as Data, OPTIONS_SCHEMA));
+    const value: Data = { ...(ev.detail.value as Data) };
+    // Do not persist a displayed default the user left alone.
+    for (const [key, def] of Object.entries(OPTION_DEFAULTS)) {
+      if (!(key in this._config!) && value[key] === def) delete value[key];
+    }
+    this._update(merge(this._config!, value, OPTIONS_SCHEMA));
   }
 
   private _itemChanged(index: number, ev: CustomEvent): void {

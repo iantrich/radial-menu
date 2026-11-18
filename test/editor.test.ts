@@ -187,6 +187,48 @@ describe('radial-menu-editor', () => {
     expect(events[2].items[0]).toEqual({ icon: 'mdi:c', name: 'C2' });
   });
 
+  it('shows default-on toggles as on without writing them into the config', async () => {
+    const { el, events } = await mount(baseConfig());
+    const form = $<Form>(el, 'ha-form.options');
+    expect(form.data!.default_dismiss).toBe(true);
+    expect(form.data!.close_on_outside_click).toBe(true);
+    formChange(form, { ...form.data, name: 'Renamed' });
+    expect(events[0]).toEqual({ ...baseConfig(), name: 'Renamed' });
+    expect('default_dismiss' in events[0]).toBe(false);
+    expect('close_on_outside_click' in events[0]).toBe(false);
+  });
+
+  it('writes a default-on toggle once the user turns it off, and keeps explicit values', async () => {
+    const { el, events } = await mount({ ...baseConfig(), close_on_outside_click: false });
+    const form = $<Form>(el, 'ha-form.options');
+    expect(form.data!.close_on_outside_click).toBe(false);
+    formChange(form, { ...form.data, default_dismiss: false });
+    expect(events[0].default_dismiss).toBe(false);
+    expect(events[0].close_on_outside_click).toBe(false);
+  });
+
+  it("clearing a field to '', null or NaN removes the key; 0 and false are kept", async () => {
+    const { el, events } = await mount({ ...baseConfig(), size: '100px', entity_picture: '/a.png', arc: 90 });
+    const form = $<Form>(el, 'ha-form.options');
+    formChange(form, { ...form.data, size: '', entity_picture: null, arc: NaN, start_angle: 0, default_open: false });
+    expect('size' in events[0]).toBe(false);
+    expect('entity_picture' in events[0]).toBe(false);
+    expect('arc' in events[0]).toBe(false);
+    expect(events[0].start_angle).toBe(0);
+    expect(events[0].default_open).toBe(false);
+
+    const item = $$<Form>(el, '.item ha-form')[0];
+    formChange(item, { ...item.data, icon: '', color: null });
+    expect('icon' in events[1].items[0]).toBe(false);
+    expect('color' in events[1].items[0]).toBe(false);
+    expect(events[1].items[0]).toEqual({ name: 'A', extra: 'keep-a' });
+  });
+
+  it('explains that the menu button tap action defaults to toggling the menu', async () => {
+    const { el } = await mount(baseConfig());
+    expect($(el, '.hint')!.textContent).toMatch(/Leaving tap action empty keeps the default \(toggles the menu\)/);
+  });
+
   it('fires config-changed as a bubbling, composed event', async () => {
     const { el } = await mount(baseConfig());
     const seen: Event[] = [];

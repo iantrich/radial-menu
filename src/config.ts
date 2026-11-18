@@ -11,13 +11,12 @@ export type ResolvedConfig = Required<
     | 'double_tap_action'
     | 'default_dismiss'
     | 'items_offset'
-    | 'size'
     | 'start_angle'
     | 'arc'
     | 'close_on_outside_click'
   >
 > &
-  RadialMenuConfig;
+  Omit<RadialMenuConfig, 'size'> & { size: string };
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -31,6 +30,10 @@ export function normalizeConfig(config: unknown): ResolvedConfig {
     throw new Error('Invalid configuration: No items defined');
   }
 
+  // A blank YAML key (`items_offset:`) is null; let the default apply instead.
+  const present = Object.fromEntries(Object.entries(input).filter(([, value]) => value != null)) as RadialMenuConfig;
+  const size = typeof input.size === 'number' ? `${input.size}px` : (input.size ?? '250px');
+
   return {
     icon: 'mdi:menu',
     name: 'menu',
@@ -40,11 +43,11 @@ export function normalizeConfig(config: unknown): ResolvedConfig {
     double_tap_action: { action: 'none' },
     default_dismiss: true,
     items_offset: 35,
-    size: '250px',
     start_angle: 0,
     arc: 360,
     close_on_outside_click: true,
-    ...input,
+    ...present,
+    size,
     items: input.items.filter((item): item is RadialMenuItemConfig => isPlainObject(item)),
   };
 }
