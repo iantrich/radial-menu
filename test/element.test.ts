@@ -46,8 +46,10 @@ const $ = (el: RadialMenu, selector: string): HTMLElement | null =>
 const $$ = (el: RadialMenu, selector: string): HTMLElement[] =>
   Array.from(el.shadowRoot!.querySelectorAll(selector)) as HTMLElement[];
 
-const pointer = (target: EventTarget, type: string): void => {
-  target.dispatchEvent(new PointerEvent(type, { bubbles: true, composed: true }));
+const pointer = (target: EventTarget, type: string, init: PointerEventInit = {}): void => {
+  target.dispatchEvent(
+    new PointerEvent(type, { bubbles: true, composed: true, isPrimary: true, button: 0, pointerId: 1, ...init }),
+  );
 };
 const tap = (target: EventTarget): void => {
   pointer(target, 'pointerdown');
@@ -218,15 +220,112 @@ describe('radial-menu element', () => {
     const el = await mount({ type: 'custom:radial-menu', default_open: true, items });
     const added = add.mock.calls.find(([type]) => type === 'pointerdown');
     expect(added).toBeDefined();
+    expect(added![2]).toEqual({ capture: true });
     el.remove();
     const removed = remove.mock.calls.find(([type]) => type === 'pointerdown');
     expect(removed).toBeDefined();
     expect(removed![1]).toBe(added![1]);
+    expect(removed![2]).toEqual({ capture: true });
     pointer(document.body, 'pointerdown');
     await el.updateComplete;
     expect(el.open).toBe(true);
     add.mockRestore();
     remove.mockRestore();
+  });
+
+  it('(e) an ancestor stopping pointerdown propagation does not prevent the outside close', async () => {
+    const el = await mount({ type: 'custom:radial-menu', default_open: true, items });
+    const container = document.createElement('div');
+    const outside = document.createElement('button');
+    container.appendChild(outside);
+    container.addEventListener('pointerdown', (ev) => ev.stopPropagation());
+    document.body.appendChild(container);
+    pointer(outside, 'pointerdown');
+    await el.updateComplete;
+    expect(el.open).toBe(false);
+  });
+
+  it('ignores non-primary buttons: a right click does not run the tap action', async () => {
+    const el = await mount({ type: 'custom:radial-menu', default_open: true, items });
+    el.hass = hass();
+    await el.updateComplete;
+    const icon = $$(el, '.circle ha-icon')[0];
+    pointer(icon, 'pointerdown', { button: 2 });
+    pointer(icon, 'pointerup', { button: 2 });
+    pointer(icon, 'pointerdown', { button: 1 });
+    pointer(icon, 'pointerup', { button: 1 });
+    pointer(icon, 'pointerdown', { isPrimary: false });
+    pointer(icon, 'pointerup', { isPrimary: false });
+    expect(handleAction).not.toHaveBeenCalled();
+    tap(icon);
+    expect(handleAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('releases implicit pointer capture on pointerdown', async () => {
+    const el = await mount({ type: 'custom:radial-menu', items });
+    const icon = $$(el, '.circle ha-icon')[0] as any;
+    const release = vi.fn();
+    icon.hasPointerCapture = vi.fn(() => true);
+    icon.releasePointerCapture = release;
+    pointer(icon, 'pointerdown', { pointerId: 7 });
+    expect(release).toHaveBeenCalledWith(7);
+  });
+
+  it('sliding off an item aborts the press', async () => {
+    const el = await mount({ type: 'custom:radial-menu', default_open: true, items });
+    el.hass = hass();
+    await el.updateComplete;
+    const icon = $$(el, '.circle ha-icon')[0];
+    pointer(icon, 'pointerdown');
+    pointer(icon, 'pointerleave', { bubbles: false });
+    pointer(document.body, 'pointerup');
+    pointer(icon, 'pointerup');
+    expect(handleAction).not.toHaveBeenCalled();
+  });
+
+  it('a stale press never turns into a hold; the next press is exactly one tap', async () => {
+    vi.useFakeTimers();
+    const el = document.createElement('radial-menu') as RadialMenu;
+    el.setConfig({ type: 'custom:radial-menu', default_open: true, default_dismiss: false, items } as any);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    const h = hass();
+    el.hass = h;
+    await el.updateComplete;
+    const [a, b] = $$(el, '.circle ha-icon');
+    pointer(a, 'pointerdown');
+    pointer(a, 'pointerleave', { bubbles: false });
+    vi.advanceTimersByTime(1000);
+    pointer(a, 'pointerup');
+    tap(b);
+    tap(a);
+    expect(vi.mocked(handleAction).mock.calls.map((call) => call[3])).toEqual(['tap', 'tap']);
+    expect(vi.mocked(handleAction).mock.calls[1]).toEqual([el, h, items[0], 'tap']);
+  });
+
+  it('a failing loadCardHelpers is logged, not unhandled, and a later setConfig retries', async () => {
+    const original = (window as any).loadCardHelpers;
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (window as any).loadCardHelpers = vi.fn(async () => {
+      throw new Error('boom');
+    });
+    try {
+      const cardItems = [{ card: { type: 'entities', entities: [] } }];
+      const el = await mount({ type: 'custom:radial-menu', items: cardItems });
+      expect(error).toHaveBeenCalledTimes(1);
+      expect($(el, '.custom')).toBeNull();
+
+      (window as any).loadCardHelpers = original;
+      el.setConfig({ type: 'custom:radial-menu', items: cardItems } as any);
+      await flush();
+      await el.updateComplete;
+      expect(createCardElement).toHaveBeenCalledTimes(1);
+      expect($(el, '.custom > div')).not.toBeNull();
+      expect(error).toHaveBeenCalledTimes(1);
+    } finally {
+      (window as any).loadCardHelpers = original;
+      error.mockRestore();
+    }
   });
 
   it('(g) size sets --radial-size on the box', async () => {

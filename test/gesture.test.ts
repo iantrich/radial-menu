@@ -91,6 +91,25 @@ describe('Gesture', () => {
     expect(emit).not.toHaveBeenCalled();
   });
 
+  it('up() without a matching down() emits nothing', () => {
+    const g = new Gesture({ hasDoubleTap: false, emit });
+    g.up();
+    vi.advanceTimersByTime(1000);
+    const dt = new Gesture({ hasDoubleTap: true, emit });
+    dt.up();
+    vi.advanceTimersByTime(1000);
+    expect(emit).not.toHaveBeenCalled();
+  });
+
+  it('dispose during a held press then up() emits nothing', () => {
+    const g = new Gesture({ hasDoubleTap: false, emit });
+    g.down();
+    vi.advanceTimersByTime(600);
+    g.dispose();
+    g.up();
+    expect(emit).not.toHaveBeenCalled();
+  });
+
   it('dispose clears a pending tap', () => {
     const g = new Gesture({ hasDoubleTap: true, emit });
     g.down();

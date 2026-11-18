@@ -11,6 +11,7 @@ import {
   hasAction,
 } from 'custom-card-helpers';
 
+import { normalizeActions } from './actions';
 import { ResolvedConfig, normalizeConfig } from './config';
 import { CARD_VERSION } from './const';
 import './editor';
@@ -38,6 +39,8 @@ interface CachedCard {
 type ActionTarget = RadialMenuConfig | RadialMenuItemConfig;
 
 const BUTTON = -1;
+// Capture phase, so an ancestor stopping pointerdown propagation cannot block the outside close.
+const CAPTURE: AddEventListenerOptions = { capture: true };
 
 @customElement('radial-menu')
 export class RadialMenu extends LitElement {
@@ -49,6 +52,7 @@ export class RadialMenu extends LitElement {
   @state() private _helpers?: CardHelpers;
 
   private _helpersRequested = false;
+  private _helpersErrorLogged = false;
   private _cards = new Map<number, CachedCard>();
   private _gestures = new Map<number, Gesture>();
 
@@ -78,7 +82,7 @@ export class RadialMenu extends LitElement {
       if (!item.card) this._gestures.set(index, this._createGesture(item, false));
     });
 
-    if (!this._helpersRequested && resolved.items.some((item) => item.card)) {
+    if (!this._helpers && !this._helpersRequested && resolved.items.some((item) => item.card)) {
       this._helpersRequested = true;
       this._loadCardHelpers();
     }
@@ -90,12 +94,12 @@ export class RadialMenu extends LitElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('pointerdown', this._onDocumentPointerDown);
+    document.addEventListener('pointerdown', this._onDocumentPointerDown, CAPTURE);
   }
 
   public disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.removeEventListener('pointerdown', this._onDocumentPointerDown);
+    document.removeEventListener('pointerdown', this._onDocumentPointerDown, CAPTURE);
     this._gestures.forEach((gesture) => gesture.dispose());
   }
 
@@ -145,8 +149,22 @@ export class RadialMenu extends LitElement {
 
   private _renderTarget(target: ActionTarget, key: number, style: unknown, cls: string): TemplateResult {
     const gesture = this._gestures.get(key);
-    const down = (): void => gesture?.down();
-    const up = (): void => gesture?.up();
+    const down = (ev: PointerEvent): void => {
+      // Only the primary pointer's main button (left mouse, touch, pen) starts a gesture.
+      if (ev.button !== 0 || !ev.isPrimary) return;
+      // Touch pointers are implicitly captured; release so leaving the item fires pointerleave.
+      const el = ev.currentTarget as Element | null;
+      try {
+        if (el?.hasPointerCapture?.(ev.pointerId)) el.releasePointerCapture(ev.pointerId);
+      } catch {
+        // Capture may already be gone; nothing to release.
+      }
+      gesture?.down();
+    };
+    const up = (ev: PointerEvent): void => {
+      if (ev.button !== 0 || !ev.isPrimary) return;
+      gesture?.up();
+    };
     const cancel = (): void => gesture?.cancel();
     const isButton = key === BUTTON;
 
@@ -160,6 +178,7 @@ export class RadialMenu extends LitElement {
           @pointerdown=${down}
           @pointerup=${up}
           @pointercancel=${cancel}
+          @pointerleave=${cancel}
           @contextmenu=${this._preventContextMenu}
         ></state-badge>`
       : html`<ha-icon
@@ -172,6 +191,7 @@ export class RadialMenu extends LitElement {
           @pointerdown=${down}
           @pointerup=${up}
           @pointercancel=${cancel}
+          @pointerleave=${cancel}
           @contextmenu=${this._preventContextMenu}
         ></ha-icon>`;
   }
@@ -189,7 +209,8 @@ export class RadialMenu extends LitElement {
       this.open = !this.open;
       return;
     }
-    if (this.hass) handleAction(this, this.hass, target, action);
+    // Normalized copy: handleAction ignores `service_data` and has no `perform-action` case.
+    if (this.hass) handleAction(this, this.hass, normalizeActions(target), action);
     if (this._config?.default_dismiss && !isButton) this.open = false;
   }
 
@@ -218,7 +239,17 @@ export class RadialMenu extends LitElement {
 
   private async _loadCardHelpers(): Promise<void> {
     const load = (window as any).loadCardHelpers as (() => Promise<CardHelpers>) | undefined;
-    if (typeof load === 'function') this._helpers = await load();
+    try {
+      if (typeof load !== 'function') throw new Error('window.loadCardHelpers is not available');
+      this._helpers = await load();
+    } catch (err) {
+      if (!this._helpersErrorLogged) {
+        this._helpersErrorLogged = true;
+        console.error('radial-menu: could not load card helpers for card items', err);
+      }
+      // Allow a later setConfig to try again.
+      this._helpersRequested = false;
+    }
   }
 
   private _disposeGestures(): void {
