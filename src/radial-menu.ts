@@ -13,6 +13,7 @@ import {
 
 import { ResolvedConfig, normalizeConfig } from './config';
 import { CARD_VERSION } from './const';
+import './editor';
 import { Gesture, GestureAction } from './gesture';
 import { itemPosition } from './layout';
 import { styles } from './styles';
