@@ -33,31 +33,33 @@ Use [HACS](https://hacs.xyz) or follow this [guide](https://github.com/thomaslov
 
 ```yaml
 resources:
-  url: /local/radial-menu.js
-  type: module
+  - url: /local/radial-menu.js
+    type: module
 ```
+
+When installed with HACS the resource URL is `/hacsfiles/radial-menu/radial-menu.js`.
 
 ## Options
 
-| Name                     | Type      | Requirement  | Description                                                                                 | Default               |
-| ------------------------ | --------- | ------------ | ------------------------------------------------------------------------------------------- | --------------------- |
-| `type`                   | `string`  | **Required** | `custom:radial-menu`                                                                        | `none`                |
-| `items`                  | `list`    | **Required** | List of items to display in the radial. See [item options](#item-options)                   | `none`                |
-| `name`                   | `string`  | **Optional** | Tooltip for main menu                                                                       | `menu`                |
-| `icon`                   | `string`  | **Optional** | mdi icon for main menu                                                                      | `mdi:menu`            |
-| `entity_picture`         | `string`  | **Optional** | picture to display                                                                          | `none`                |
-| `default_open`           | `boolean` | **Optional** | Should the radial be expanded on first load                                                 | `false`               |
-| `default_dismiss`        | `boolean` | **Optional** | Should the radial be dismissed on click of an item                                          | `true`                |
-| `close_on_outside_click` | `boolean` | **Optional** | Close the open menu when clicking or tapping anywhere outside of it                         | `true`                |
-| `entity`                 | `string`  | **Optional** | Home Assistant entity ID (used for `more-info` action)                                      | `none`                |
-| `tap_action`             | `map`     | **Optional** | Action to take on tap. See [action options](#action-options)                                | `action: toggle-menu` |
-| `hold_action`            | `map`     | **Optional** | Action to take on hold. See [action options](#action-options)                               | `action: none`        |
-| `double_tap_action`      | `map`     | **Optional** | Action to take on double tap. See [action options](#action-options)                         | `action: none`        |
-| `theme`                  | `string`  | **Optional** | Card theme                                                                                  |                       |
-| `items_offset`           | `number`  | **Optional** | Distance of items from menu center, as a percentage of the menu size                        | `35`                  |
-| `size`                   | `string`  | **Optional** | Menu size as any CSS length. Use `100%` to make the menu fill its parent and scale with it  | `250px`               |
-| `start_angle`            | `number`  | **Optional** | Angle of the first item in degrees, clockwise from 12 o'clock                               | `0`                   |
-| `arc`                    | `number`  | **Optional** | Degrees the items span. Below `360` the first and last items sit on the two ends of the arc | `360`                 |
+| Name                     | Type      | Requirement  | Description                                                                                             | Default               |
+| ------------------------ | --------- | ------------ | ------------------------------------------------------------------------------------------------------- | --------------------- |
+| `type`                   | `string`  | **Required** | `custom:radial-menu`                                                                                    | `none`                |
+| `items`                  | `list`    | **Required** | List of items to display in the radial. See [item options](#item-options)                               | `none`                |
+| `name`                   | `string`  | **Optional** | Tooltip for main menu                                                                                   | `menu`                |
+| `icon`                   | `string`  | **Optional** | mdi icon for main menu                                                                                  | `mdi:menu`            |
+| `entity_picture`         | `string`  | **Optional** | picture to display                                                                                      | `none`                |
+| `default_open`           | `boolean` | **Optional** | Should the radial be expanded on first load                                                             | `false`               |
+| `default_dismiss`        | `boolean` | **Optional** | Should the radial be dismissed on click of an item                                                      | `true`                |
+| `close_on_outside_click` | `boolean` | **Optional** | Close the open menu when clicking or tapping anywhere outside of it                                     | `true`                |
+| `entity`                 | `string`  | **Optional** | Home Assistant entity ID (used for `more-info` action)                                                  | `none`                |
+| `tap_action`             | `map`     | **Optional** | Action to take on tap. See [action options](#action-options)                                            | `action: toggle-menu` |
+| `hold_action`            | `map`     | **Optional** | Action to take on hold. See [action options](#action-options)                                           | `action: none`        |
+| `double_tap_action`      | `map`     | **Optional** | Action to take on double tap. See [action options](#action-options)                                     | `action: none`        |
+| `theme`                  | `string`  | **Optional** | Card theme                                                                                              |                       |
+| `items_offset`           | `number`  | **Optional** | Distance of items from menu center, as a percentage of the menu size                                    | `35`                  |
+| `size`                   | `string`  | **Optional** | Menu size as any CSS length (a plain number is pixels). Use `100%` to fill the parent and scale with it | `250px`               |
+| `start_angle`            | `number`  | **Optional** | Angle of the first item in degrees, clockwise from 12 o'clock                                           | `0`                   |
+| `arc`                    | `number`  | **Optional** | Degrees the items span. Below `360` the first and last items sit on the two ends of the arc             | `360`                 |
 
 ## Item Options
 
@@ -70,21 +72,23 @@ resources:
 | `entity_picture`    | `string` | **Optional** | picture to display                                                                     | `none`              |
 | `color`             | `string` | **Optional** | Icon color for this item (any CSS color). The hover color still applies while hovering | `none`              |
 | `tap_action`        | `map`    | **Optional** | Action to take on tap. See [action options](#action-options)                           | `action: more-info` |
-| `hold_action`       | `map`    | **Optional** | Action to take on hold. See [action options](#action-options)                          | `none`              |
+| `hold_action`       | `map`    | **Optional** | Action to take on hold. See [action options](#action-options)                          | `action: more-info` |
 | `double_tap_action` | `map`    | **Optional** | Action to take on double tap. See [action options](#action-options)                    | `action: none`      |
 
 ## Action Options
 
-| Name              | Type     | Default  | Supported options                                                        | Description                                                                                               |
-| ----------------- | -------- | -------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `action`          | `string` | `toggle` | `more-info`, `toggle`, `call-service`, `none`, `navigate`, `url`         | Action to perform                                                                                         |
-| `entity`          | `string` | none     | Any entity id                                                            | **Only valid for `action: more-info`** to override the entity on which you want to call `more-info`       |
-| `navigation_path` | `string` | none     | Eg: `/lovelace/0/`                                                       | Path to navigate to (e.g. `/lovelace/0/`) when action defined as navigate                                 |
-| `url_path`        | `string` | none     | Eg: `https://www.google.com`                                             | URL to open on click when action is `url`.                                                                |
-| `service`         | `string` | none     | Any service                                                              | Service to call (e.g. `media_player.media_play_pause`) when `action` defined as `call-service`            |
-| `service_data`    | `map`    | none     | Any service data                                                         | Service data to include (e.g. `entity_id: media_player.bedroom`) when `action` defined as `call-service`. |
-| `haptic`          | `string` | none     | `success`, `warning`, `failure`, `light`, `medium`, `heavy`, `selection` | Haptic feedback for the [Beta IOS App](http://home-assistant.io/ios/beta)                                 |
-
+| Name              | Type     | Supported options                                                                                 | Description                                                                                                                                            |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `action`          | `string` | `more-info`, `toggle`, `call-service`, `perform-action`, `navigate`, `url`, `toggle-menu`, `none` | Action to perform. Defaults are listed in the option tables above. `toggle-menu` opens or closes the menu and is the menu button's default tap action. |
+| `entity`          | `string` | Any entity id                                                                                     | **Only valid for `action: more-info`** to override the entity on which you want to call `more-info`                                                    |
+| `navigation_path` | `string` | Eg: `/lovelace/0/`                                                                                | Path to navigate to (e.g. `/lovelace/0/`) when action defined as navigate                                                                              |
+| `url_path`        | `string` | Eg: `https://www.google.com`                                                                      | URL to open on click when action is `url`.                                                                                                             |
+| `service`         | `string` | Any service                                                                                       | Service to call (e.g. `media_player.media_play_pause`) when `action` is `call-service`                                                                 |
+| `service_data`    | `map`    | Any service data                                                                                  | Service data (e.g. `entity_id: media_player.bedroom`) when `action` is `call-service`. `data` works too.                                               |
+| `perform_action`  | `string` | Any action                                                                                        | Action to perform (e.g. `light.turn_on`) when `action` is `perform-action`. This is what the visual editor writes.                                     |
+| `data`            | `map`    | Any action data                                                                                   | Data for `perform-action` (or `call-service`)                                                                                                          |
+| `target`          | `map`    | `entity_id`, `device_id`, `area_id`                                                               | Target for `perform-action` (or `call-service`)                                                                                                        |
+| `haptic`          | `string` | `success`, `warning`, `failure`, `light`, `medium`, `heavy`, `selection`                          | Accepted for compatibility. The companion app's haptic feedback is sent by the action itself (`success` after `toggle` or a service call).             |
 
 ## Visual Editor
 
@@ -96,14 +100,14 @@ The following variables can be set in your theme (or on any parent element) to c
 
 Values can be a color name, hexadecimal, rgb, rgba, hsl, hsla, basically anything supported by CSS.
 
-| name                                  | Default                        | Description                              |
-| ------------------------------------- | ------------------------------ | ---------------------------------------- |
-| `--radial-icon-size`                  | `--mdc-icon-size`, else `24px` | Icon size                                |
-| `--radial-menu-button-color`          | `--primary-color`              | Main menu button color                   |
-| `--radial-menu-item-color`            | `--primary-color`              | Item icon color                          |
-| `--radial-menu-item-hover-color`      | `--accent-color`               | Item icon color on hover                 |
-| `--radial-menu-item-hover-background` | `--secondary-background-color` | Background of items and button on hover  |
-| `--radial-menu-transition`            | `0.4s ease-out`                | Open/close transition (duration, easing) |
+| name                                  | Default                        | Description                                                                 |
+| ------------------------------------- | ------------------------------ | --------------------------------------------------------------------------- |
+| `--radial-icon-size`                  | `--mdc-icon-size`, else `24px` | Icon size                                                                   |
+| `--radial-menu-button-color`          | `--primary-color`              | Main menu button color                                                      |
+| `--radial-menu-item-color`            | `--primary-color`              | Item icon color                                                             |
+| `--radial-menu-item-hover-color`      | `--accent-color`               | Icon item color on hover                                                    |
+| `--radial-menu-item-hover-background` | `--secondary-background-color` | Background of picture items (`entity_picture`) and the menu button on hover |
+| `--radial-menu-transition`            | `0.4s ease-out`                | Open/close transition (duration, easing)                                    |
 
 A per-item `color` overrides the item color for that item only; the hover color still wins while hovering.
 
@@ -143,12 +147,17 @@ elements:
 
 ## Usage
 
+![example3](example3.png)
+
+Since 2.0 an open menu closes on a click outside it, so a menu meant to stay open sets `close_on_outside_click: false`, as below.
+
 ```yaml
 type: 'custom:radial-menu'
 icon: 'mdi:home'
 name: 'Home'
 default_open: true
 default_dismiss: false
+close_on_outside_click: false
 size: 100%
 hold_action:
   action: url
@@ -226,9 +235,9 @@ Existing configs keep working. Two behaviors changed on purpose:
 1. Embedded `card:` items are now centered on their position point. In 1.6.0 they were offset by about 10px right and 25px down; that offset is gone, so cards may sit slightly differently than before.
 2. `close_on_outside_click` is on by default for all configs. A menu with `default_open: true` that is meant to stay open now closes on a click outside it. To keep the old behavior set `close_on_outside_click: false`.
 
-New in 2.0: `size`, `start_angle`, `arc`, per-item `color`, `close_on_outside_click`, the `--radial-menu-item-hover-color`, `--radial-menu-item-hover-background` and `--radial-menu-transition` theme variables, and a visual editor.
+If you style card items with `card_mod`: each `card:` item is now wrapped in an outer `div.custom` that holds its position, with the card inside it. In 1.6.0 the `custom` class was on the card element itself, so rules targeting `.custom` now hit the wrapper rather than the card.
 
-![example3](example3.png)
+New in 2.0: `size`, `start_angle`, `arc`, per-item `color`, `close_on_outside_click`, `perform-action` actions, the `--radial-menu-item-hover-color`, `--radial-menu-item-hover-background` and `--radial-menu-transition` theme variables, and a visual editor.
 
 [Troubleshooting](https://github.com/thomasloven/hass-config/wiki/Lovelace-Plugins)
 
