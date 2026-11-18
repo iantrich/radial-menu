@@ -27,9 +27,7 @@ describe('itemPosition', () => {
     const opts = { ...defaults, arc: 180 };
     expect(itemPosition(0, 3, opts)).toEqual({ left: '50.0000%', top: '15.0000%' });
     expect(itemPosition(2, 3, opts)).toEqual({ left: '50.0000%', top: '85.0000%' });
-    expect(itemPosition(2, 3, { ...opts, startAngle: 30 })).toEqual(
-      itemPosition(0, 3, { ...opts, startAngle: 210 }),
-    );
+    expect(itemPosition(2, 3, { ...opts, startAngle: 30 })).toEqual(itemPosition(0, 3, { ...opts, startAngle: 210 }));
   });
 
   it('puts a single item at startAngle when arc < 360', () => {

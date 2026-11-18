@@ -16,7 +16,7 @@
   "author": "Ian Richardson <iantrich@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "custom-card-helpers": "^2.2.1",
+    "custom-card-helpers": "2.2.1",
     "lit": "^3.2.0"
   },
   "devDependencies": {
@@ -32,6 +32,7 @@
     "start": "vite build --watch",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "lint": "eslint src test"
+    "lint": "eslint src test",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\""
   }
 }
