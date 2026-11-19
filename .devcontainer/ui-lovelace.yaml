@@ -36,3 +36,34 @@ views:
               service_data:
                 entity_id: timer.laundry
               haptic: true
+      - type: custom:radial-menu
+        icon: mdi:star
+        name: 2.0 demo
+        size: 300px
+        start_angle: -90
+        arc: 180
+        items:
+          - entity: light.bed_light
+            icon: mdi:lightbulb
+            name: Bedroom Light
+            color: gold
+            tap_action:
+              action: toggle
+          - icon: mdi:alarm
+            name: Timer
+            color: tomato
+            tap_action:
+              action: call-service
+              service: timer.start
+              service_data:
+                entity_id: timer.laundry
+          - card:
+              type: button
+              entity: light.bed_light
+              show_name: false
+          - entity: alarm_control_panel.ha_alarm
+            icon: mdi:alarm-light
+            name: Alarm Panel
+            color: '#4caf50'
+            tap_action:
+              action: more-info
