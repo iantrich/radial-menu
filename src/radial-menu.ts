@@ -168,13 +168,21 @@ export class RadialMenu extends LitElement {
     const cancel = (): void => gesture?.cancel();
     const isButton = key === BUTTON;
 
-    return target.entity_picture
+    // With a real entity, state-badge reflects its state (on/off colors, icon, picture).
+    const entityState = target.entity ? this.hass?.states?.[target.entity] : undefined;
+
+    return target.entity_picture || entityState
       ? html`<state-badge
           class=${cls}
           style=${style}
+          title=${target.name ?? ''}
           .menu=${isButton}
           .config=${target}
-          .stateObj=${{ attributes: { entity_picture: target.entity_picture }, entity_id: 'sensor.fake' }}
+          .stateObj=${entityState ?? { attributes: { entity_picture: target.entity_picture }, entity_id: 'sensor.fake' }}
+          .overrideIcon=${target.icon}
+          .overrideImage=${target.entity_picture}
+          .stateColor=${!!entityState}
+          .color=${target.color}
           @pointerdown=${down}
           @pointerup=${up}
           @pointercancel=${cancel}

@@ -187,6 +187,24 @@ describe('radial-menu element', () => {
     expect(handleAction).toHaveBeenCalledWith(el, h, items[1], 'hold');
   });
 
+  it('renders entity-backed items through state-badge with the live state; others stay ha-icon', async () => {
+    const el = await mount({ type: 'custom:radial-menu', default_open: true, items });
+    const light = { entity_id: 'light.a', state: 'on', attributes: {} };
+    el.hass = hass({ states: { 'light.a': light } });
+    await el.updateComplete;
+    const badges = $$(el, '.circle state-badge') as any[];
+    expect(badges).toHaveLength(1);
+    expect(badges[0].stateObj).toBe(light);
+    expect(badges[0].overrideIcon).toBe('mdi:lightbulb');
+    expect(badges[0].stateColor).toBe(true);
+    expect($$(el, '.circle ha-icon')).toHaveLength(1);
+
+    const off = { entity_id: 'light.a', state: 'off', attributes: {} };
+    el.hass = hass({ states: { 'light.a': off } });
+    await el.updateComplete;
+    expect(($$(el, '.circle state-badge') as any[])[0].stateObj).toBe(off);
+  });
+
   it('prevents the context menu on interactive items', async () => {
     const el = await mount({ type: 'custom:radial-menu', items });
     const ev = new Event('contextmenu', { bubbles: true, cancelable: true, composed: true });

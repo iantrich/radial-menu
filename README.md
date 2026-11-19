@@ -63,17 +63,17 @@ When installed with HACS the resource URL is `/hacsfiles/radial-menu/radial-menu
 
 ## Item Options
 
-| Name                | Type     | Requirement  | Description                                                                            | Default             |
-| ------------------- | -------- | ------------ | -------------------------------------------------------------------------------------- | ------------------- |
-| `card`              | `map`    | **Optional** | A whole other Lovelace card configuration to build, centered on the item position.     | `none`              |
-| `entity`            | `string` | **Optional** | Home Assistant entity ID.                                                              | `none`              |
-| `name`              | `string` | **Optional** | Tooltip for the item                                                                   | `none`              |
-| `icon`              | `string` | **Optional** | mdi icon for the item                                                                  | `none`              |
-| `entity_picture`    | `string` | **Optional** | picture to display                                                                     | `none`              |
-| `color`             | `string` | **Optional** | Icon color for this item (any CSS color). The hover color still applies while hovering | `none`              |
-| `tap_action`        | `map`    | **Optional** | Action to take on tap. See [action options](#action-options)                           | `action: more-info` |
-| `hold_action`       | `map`    | **Optional** | Action to take on hold. See [action options](#action-options)                          | `action: more-info` |
-| `double_tap_action` | `map`    | **Optional** | Action to take on double tap. See [action options](#action-options)                    | `action: none`      |
+| Name                | Type     | Requirement  | Description                                                                                                                                                                                     | Default             |
+| ------------------- | -------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `card`              | `map`    | **Optional** | A whole other Lovelace card configuration to build, centered on the item position.                                                                                                              | `none`              |
+| `entity`            | `string` | **Optional** | Home Assistant entity ID. The icon reflects the entity's state (on/off colors), like a tile or entities-row icon. `icon` still overrides the icon shape, and `color` overrides the state color. | `none`              |
+| `name`              | `string` | **Optional** | Tooltip for the item                                                                                                                                                                            | `none`              |
+| `icon`              | `string` | **Optional** | mdi icon for the item                                                                                                                                                                           | `none`              |
+| `entity_picture`    | `string` | **Optional** | picture to display                                                                                                                                                                              | `none`              |
+| `color`             | `string` | **Optional** | Icon color for this item (any CSS color). The hover color still applies while hovering                                                                                                          | `none`              |
+| `tap_action`        | `map`    | **Optional** | Action to take on tap. See [action options](#action-options)                                                                                                                                    | `action: more-info` |
+| `hold_action`       | `map`    | **Optional** | Action to take on hold. See [action options](#action-options)                                                                                                                                   | `action: more-info` |
+| `double_tap_action` | `map`    | **Optional** | Action to take on double tap. See [action options](#action-options)                                                                                                                             | `action: none`      |
 
 ## Action Options
 

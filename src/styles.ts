@@ -10,7 +10,8 @@ export const styles = css`
     --menu-transition: var(--radial-menu-transition, 0.4s ease-out);
   }
 
-  ha-icon {
+  ha-icon,
+  state-badge {
     --mdc-icon-size: var(--icon-size);
   }
 
