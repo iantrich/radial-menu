@@ -182,7 +182,7 @@ export class RadialMenu extends LitElement {
           .overrideIcon=${target.icon}
           .overrideImage=${target.entity_picture}
           .stateColor=${!!entityState}
-          .color=${target.color}
+          .color=${'color' in target ? target.color : undefined}
           @pointerdown=${down}
           @pointerup=${up}
           @pointercancel=${cancel}

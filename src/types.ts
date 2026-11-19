@@ -5,6 +5,7 @@ export interface RadialMenuConfig {
   name?: string;
   icon?: string;
   entity_picture?: string;
+  entity?: string;
   default_open?: boolean;
   default_dismiss?: boolean;
   tap_action?: ActionConfig;
