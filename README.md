@@ -90,6 +90,8 @@ When installed with HACS the resource URL is `/hacsfiles/radial-menu/radial-menu
 | `target`          | `map`    | `entity_id`, `device_id`, `area_id`                                                               | Target for `perform-action` (or `call-service`)                                                                                                        |
 | `haptic`          | `string` | `success`, `warning`, `failure`, `light`, `medium`, `heavy`, `selection`                          | Accepted for compatibility. The companion app's haptic feedback is sent by the action itself (`success` after `toggle` or a service call).             |
 
+**Confirmations:** an action's `confirmation` is handled by custom-card-helpers, which uses the browser's `confirm()` prompt. The Home Assistant companion app does not show that prompt, so the action does not run there; the app only vibrates. Use confirmations in a browser, or confirm inside a script instead.
+
 ## Visual Editor
 
 The card has a visual editor: add a card in the dashboard editor and choose Radial Menu. Menu options and regular items (icon, name, entity, actions, color) can be edited there. Items that use `card:` are YAML-only: the editor shows them read-only, so edit those in the YAML editor.
